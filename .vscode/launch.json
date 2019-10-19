@@ -1,0 +1,38 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Train test run",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/train.py",
+            "args": [
+                // "--testrun",
+                "--max-num-epochs",
+                "5",
+                "--max-files-per-dir",
+                "1", 
+                "--dryrun", 
+                // "--sequential", 
+                "--model", 
+                "convselfatt", 
+                "/trained_models",
+                "../resources/data/python/final/jsonl/train",
+                "../resources/data/python/final/jsonl/valid",
+                "../resources/data/python/final/jsonl/test"
+            ],
+            "cwd": "${workspaceFolder}/src",
+            "console": "integratedTerminal"
+        }
+    ]
+}

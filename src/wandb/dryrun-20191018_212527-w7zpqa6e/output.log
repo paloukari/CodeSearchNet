@@ -1,0 +1,215 @@
+2019-10-18 21:25:55.922746: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-10-18 21:25:56.100410: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:964] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2019-10-18 21:25:56.101426: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1432] Found device 0 with properties: 
+name: Tesla V100-PCIE-16GB major: 7 minor: 0 memoryClockRate(GHz): 1.38
+pciBusID: 0000:00:07.0
+totalMemory: 15.75GiB freeMemory: 15.44GiB
+2019-10-18 21:25:56.101466: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1511] Adding visible gpu devices: 0
+2019-10-18 21:25:56.612315: I tensorflow/core/common_runtime/gpu/gpu_device.cc:982] Device interconnect StreamExecutor with strength 1 edge matrix:
+2019-10-18 21:25:56.612375: I tensorflow/core/common_runtime/gpu/gpu_device.cc:988]      0 
+2019-10-18 21:25:56.612385: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1001] 0:   N 
+2019-10-18 21:25:56.612504: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1115] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 14943 MB memory) -> physical GPU (device: 0, name: Tesla V100-PCIE-16GB, pci bus id: 0000:00:07.0, compute capability: 7.0)
+Tokenizing and building vocabulary for code snippets and queries.  This step may take several hours.
+E00121.865: Exception escaped from start_client
+            
+            Traceback (most recent call last):
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/log.py", line 110, in g
+                return f(*args, **kwargs)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/pydevd_hooks.py", line 74, in start_client
+                sock, start_session = daemon.start_client((host, port))
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 214, in start_client
+                with self.started():
+              File "/usr/lib/python3.6/contextlib.py", line 81, in __enter__
+                return next(self.gen)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 110, in started
+                self.start()
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 145, in start
+                raise RuntimeError('already started')
+            RuntimeError: already started
+            
+
+Traceback (most recent call last):
+Error in sys.excepthook:
+Error in sys.excepthook:
+Traceback (most recent call last):
+
+
+Original exception was:
+
+Original exception was:
+Traceback (most recent call last):
+E00121.876: Exception escaped from start_client
+            
+            Traceback (most recent call last):
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/log.py", line 110, in g
+                return f(*args, **kwargs)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/pydevd_hooks.py", line 74, in start_client
+                sock, start_session = daemon.start_client((host, port))
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 214, in start_client
+                with self.started():
+              File "/usr/lib/python3.6/contextlib.py", line 81, in __enter__
+                return next(self.gen)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 110, in started
+                self.start()
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 145, in start
+                raise RuntimeError('already started')
+            RuntimeError: already started
+            
+
+
+Traceback (most recent call last):
+Error in sys.excepthook:
+Error in sys.excepthook:
+Traceback (most recent call last):
+
+
+Original exception was:
+
+Original exception was:
+Traceback (most recent call last):
+
+E00121.892: Exception escaped from start_client
+            
+            Traceback (most recent call last):
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/log.py", line 110, in g
+                return f(*args, **kwargs)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/pydevd_hooks.py", line 74, in start_client
+                sock, start_session = daemon.start_client((host, port))
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 214, in start_client
+                with self.started():
+              File "/usr/lib/python3.6/contextlib.py", line 81, in __enter__
+                return next(self.gen)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 110, in started
+                self.start()
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 145, in start
+                raise RuntimeError('already started')
+            RuntimeError: already started
+            
+
+Traceback (most recent call last):
+Error in sys.excepthook:
+Error in sys.excepthook:
+Traceback (most recent call last):
+
+
+Original exception was:
+
+Original exception was:
+Traceback (most recent call last):
+
+E00121.908: Exception escaped from start_client
+            
+            Traceback (most recent call last):
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/log.py", line 110, in g
+                return f(*args, **kwargs)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/pydevd_hooks.py", line 74, in start_client
+                sock, start_session = daemon.start_client((host, port))
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 214, in start_client
+                with self.started():
+              File "/usr/lib/python3.6/contextlib.py", line 81, in __enter__
+                return next(self.gen)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 110, in started
+                self.start()
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 145, in start
+                raise RuntimeError('already started')
+            RuntimeError: already started
+            
+
+Traceback (most recent call last):
+Error in sys.excepthook:
+Error in sys.excepthook:
+Traceback (most recent call last):
+
+
+Original exception was:
+
+Original exception was:
+Traceback (most recent call last):
+
+E00121.925: Exception escaped from start_client
+            
+            Traceback (most recent call last):
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/log.py", line 110, in g
+                return f(*args, **kwargs)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/pydevd_hooks.py", line 74, in start_client
+                sock, start_session = daemon.start_client((host, port))
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 214, in start_client
+                with self.started():
+              File "/usr/lib/python3.6/contextlib.py", line 81, in __enter__
+                return next(self.gen)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 110, in started
+                self.start()
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 145, in start
+                raise RuntimeError('already started')
+            RuntimeError: already started
+            
+
+Traceback (most recent call last):
+Error in sys.excepthook:
+Error in sys.excepthook:
+Traceback (most recent call last):
+
+
+Original exception was:
+
+Original exception was:
+Traceback (most recent call last):
+
+E00121.944: Exception escaped from start_client
+            
+            Traceback (most recent call last):
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/log.py", line 110, in g
+                return f(*args, **kwargs)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/pydevd_hooks.py", line 74, in start_client
+                sock, start_session = daemon.start_client((host, port))
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 214, in start_client
+                with self.started():
+              File "/usr/lib/python3.6/contextlib.py", line 81, in __enter__
+                return next(self.gen)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 110, in started
+                self.start()
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 145, in start
+                raise RuntimeError('already started')
+            RuntimeError: already started
+            
+
+Traceback (most recent call last):
+Error in sys.excepthook:
+Error in sys.excepthook:
+Traceback (most recent call last):
+
+
+Original exception was:
+
+Original exception was:
+Traceback (most recent call last):
+
+E00121.965: Exception escaped from start_client
+            
+            Traceback (most recent call last):
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/log.py", line 110, in g
+                return f(*args, **kwargs)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/pydevd_hooks.py", line 74, in start_client
+                sock, start_session = daemon.start_client((host, port))
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 214, in start_client
+                with self.started():
+              File "/usr/lib/python3.6/contextlib.py", line 81, in __enter__
+                return next(self.gen)
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 110, in started
+                self.start()
+              File "/root/.vscode-server-insiders/extensions/ms-python.python-2019.10.41019/pythonFiles/lib/python/old_ptvsd/ptvsd/daemon.py", line 145, in start
+                raise RuntimeError('already started')
+            RuntimeError: already started
+            
+
+Traceback (most recent call last):
+Error in sys.excepthook:
+Error in sys.excepthook:
+Traceback (most recent call last):
+
+
+Original exception was:
+
+Original exception was:
+Traceback (most recent call last):
+

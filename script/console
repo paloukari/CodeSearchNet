@@ -5,8 +5,8 @@ cd $(dirname "$0")/..
 
 # detect if user is on new version of nvidia-docker and run the appropriate command
 if docker run --gpus all nvidia/cuda:9.0-base nvidia-smi 2>/dev/null; then
-    docker run --gpus all -it --net=host -v $(pwd):/home/dev csnet:gpu bash
+    docker run --gpus all -it -v $(pwd):/home/dev -p 32002:22 csnet:gpu
 else
-    docker run --runtime=nvidia -it --net=host -v $(pwd):/home/dev csnet:gpu bash
+    docker run --runtime=nvidia -it -v $(pwd):/home/dev -p 32002:22 csnet:gpu
 fi
 

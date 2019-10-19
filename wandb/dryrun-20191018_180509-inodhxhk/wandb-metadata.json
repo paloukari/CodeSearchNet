@@ -1,0 +1,31 @@
+{
+    "root": "/home/dev",
+    "program": "/home/dev/src/train.py",
+    "git": {
+        "remote": "https://github.com/paloukari/CodeSearchNet",
+        "commit": "dbb2e648a5afb82247ed35037d3925dcfd4d5956"
+    },
+    "email": null,
+    "startedAt": "2019-10-18T18:05:09.689279",
+    "host": "25285b303801",
+    "username": "root",
+    "executable": "/usr/bin/python3",
+    "os": "Linux-4.4.0-164-generic-x86_64-with-Ubuntu-16.04-xenial",
+    "python": "3.6.8",
+    "gpu": "Tesla V100-PCIE-16GB",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": "9.0.176",
+    "args": [
+        "--testrun",
+        "--dryrun",
+        "--sequential"
+    ],
+    "state": "finished",
+    "jobType": null,
+    "mode": "dryrun",
+    "name": "neuralbowmodel-2019-10-18-18-05-09",
+    "project": "dev-src",
+    "heartbeatAt": "2019-10-18T18:06:45.129219",
+    "exitcode": 0
+}
