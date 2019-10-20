@@ -3,13 +3,13 @@
     "program": "/home/dev/src/train.py",
     "git": {
         "remote": "https://github.com/paloukari/CodeSearchNet",
-        "commit": "dbb2e648a5afb82247ed35037d3925dcfd4d5956"
+        "commit": "f7f12fb93e19e32dc9e26fd29ec39db9f1562a3c"
     },
-    "email": null,
-    "startedAt": "2019-10-18T21:27:57.181992",
+    "email": "paloukari@hotmail.com",
+    "startedAt": "2019-10-20T03:21:12.484016",
     "host": "25285b303801",
     "username": "root",
-    "executable": "/usr/bin/python",
+    "executable": "/usr/bin/python3",
     "os": "Linux-4.4.0-164-generic-x86_64-with-Ubuntu-16.04-xenial",
     "python": "3.6.8",
     "gpu": "Tesla V100-PCIE-16GB",
@@ -17,10 +17,14 @@
     "cpu_count": 8,
     "cuda": "9.0.176",
     "args": [
-        "--testrun",
+        "--max-num-epochs",
+        "5",
+        "--max-files-per-dir",
+        "1",
         "--dryrun",
+        "--sequential",
         "--model",
-        "convselfatt",
+        "ggnn2trans",
         "/trained_models",
         "../resources/data/python/final/jsonl/train",
         "../resources/data/python/final/jsonl/valid",
@@ -29,8 +33,8 @@
     "state": "finished",
     "jobType": null,
     "mode": "dryrun",
-    "name": "convselfatt-2019-10-18-21-27-57",
+    "name": "ggnn2trans-2019-10-20-03-21-12",
     "project": "CodeSearchNet",
-    "heartbeatAt": "2019-10-18T21:33:55.973805",
+    "heartbeatAt": "2019-10-20T03:21:33.909181",
     "exitcode": 0
 }

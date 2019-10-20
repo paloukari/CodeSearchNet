@@ -177,7 +177,9 @@ def run(arguments, tag_in_vcs=False) -> None:
                                parallelize=not(arguments['--sequential']))
 
     wandb.config['best_model_path'] = str(model_path)
-    wandb.save(str(model_path.to_local_path()))
+    
+    if arguments.get('--dryrun'):
+        wandb.save(str(model_path.to_local_path()))
 
     # only limit files in test run if `--testrun` flag is passed by user.
     if testrun:

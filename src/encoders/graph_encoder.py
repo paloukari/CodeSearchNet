@@ -69,6 +69,16 @@ class GraphEncoder(Encoder):
             self._make_placeholders()
             self.__make_input_model()
             self.__build_graph_propagation_model()
+            # TODO: create self.ops['code_representations'] from self.ops['final_node_representations']
+            #if self.params['graph_node_label_representation_size'] != self.params['hidden_size']:
+            # self.ops['projected_node_features'] = \
+            #     tf.keras.layers.Dense(units=h_dim,
+            #                           use_bias=False,
+            #                           activation=activation_fn,
+            #                           )(self.ops['initial_node_features'])
+            return self.ops['final_node_representations']
+
+
 
     def __build_graph_propagation_model(self) -> tf.Tensor:
         h_dim = self.params['hidden_size']
@@ -114,8 +124,6 @@ class GraphEncoder(Encoder):
                                               )(cur_node_representations)
 
         self.ops['final_node_representations'] = cur_node_representations
-
-        # TODO: create  self.ops['code_representations'] from self.ops['final_node_representations']
 
     @abstractmethod
     def _apply_gnn_layer(self,
@@ -216,29 +224,30 @@ class GraphEncoder(Encoder):
         self.ops['adjacency_lists'] = self.placeholders['adjacency_lists']
         self.ops['type_to_num_incoming_edges'] = self.placeholders['type_to_num_incoming_edges']
 
-    def embedding_layer(self, token_inp: tf.Tensor) -> tf.Tensor:
-        # TODO: this meeds to change/go
-        """
-        Creates embedding layer that is in common between many encoders.
+    # TODO: remove/refactor this
+    # def embedding_layer(self, token_inp: tf.Tensor) -> tf.Tensor:
+    #     # TODO: this meeds to change/go
+    #     """
+    #     Creates embedding layer that is in common between many encoders.
 
-        Args:
-            token_inp:  2D tensor that is of shape (batch size, sequence length)
+    #     Args:
+    #         token_inp:  2D tensor that is of shape (batch size, sequence length)
 
-        Returns:
-            3D tensor of shape (batch size, sequence length, embedding dimension)
-        """
+    #     Returns:
+    #         3D tensor of shape (batch size, sequence length, embedding dimension)
+    #     """
 
-        token_embeddings = tf.get_variable(name='token_embeddings',
-                                           initializer=tf.glorot_uniform_initializer(),
-                                           shape=[len(self.metadata['token_vocab']),
-                                                  self.get_hyper('token_embedding_size')],
-                                           )
-        self.__embeddings = token_embeddings
+    #     token_embeddings = tf.get_variable(name='token_embeddings',
+    #                                        initializer=tf.glorot_uniform_initializer(),
+    #                                        shape=[len(self.metadata['token_vocab']),
+    #                                               self.get_hyper('token_embedding_size')],
+    #                                        )
+    #     self.__embeddings = token_embeddings
 
-        token_embeddings = tf.nn.dropout(token_embeddings,
-                                         keep_prob=self.placeholders['dropout_keep_rate'])
+    #     token_embeddings = tf.nn.dropout(token_embeddings,
+    #                                      keep_prob=self.placeholders['dropout_keep_rate'])
 
-        return tf.nn.embedding_lookup(params=token_embeddings, ids=token_inp)
+    #     return tf.nn.embedding_lookup(params=token_embeddings, ids=token_inp)
 
     @classmethod
     def init_metadata(cls) -> Dict[str, Any]:
@@ -257,8 +266,10 @@ class GraphEncoder(Encoder):
                 yield token
 
     @classmethod
-    def load_metadata_from_sample(cls, data_to_load: Iterable[str], raw_metadata: Dict[str, Any],
+    def load_metadata_from_sample(cls, raw_data: str, data_to_load: Iterable[str], raw_metadata: Dict[str, Any],
                                   use_subtokens: bool = False, mark_subtoken_end: bool = False) -> None:
+
+        # TODO: load the code (graph?) metadata
         if use_subtokens:
             data_to_load = cls._to_subtoken_stream(
                 data_to_load, mark_subtoken_end=mark_subtoken_end)
@@ -403,6 +414,7 @@ class GraphEncoder(Encoder):
 
         return False
 
-    def get_token_embeddings(self) -> Tuple[tf.Tensor, List[str]]:
-        return (self.__embeddings,
-                list(self.metadata['token_vocab'].id_to_token))
+    # TODO: remove/refactor this
+    # def get_token_embeddings(self) -> Tuple[tf.Tensor, List[str]]:
+    #     return (self.__embeddings,
+    #             list(self.metadata['token_vocab'].id_to_token))

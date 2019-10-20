@@ -401,11 +401,12 @@ class Model(ABC):
 
             for raw_sample in file_path.read_by_file_suffix():
                 sample_language = raw_sample['language']
-                self.__code_encoder_type.load_metadata_from_sample(raw_sample['code_tokens'],
+                self.__code_encoder_type.load_metadata_from_sample(raw_sample['code'],
+                                                                   raw_sample['code_tokens'],
                                                                    per_code_language_metadata[sample_language],
                                                                    self.hyperparameters['code_use_subtokens'],
                                                                    self.hyperparameters['code_mark_subtoken_end'])
-                self.__query_encoder_type.load_metadata_from_sample([d.lower() for d in raw_sample['docstring_tokens']],
+                self.__query_encoder_type.load_metadata_from_sample(raw_sample['docstring'], [d.lower() for d in raw_sample['docstring_tokens']],
                                                                     raw_query_metadata)
             yield (raw_query_metadata, per_code_language_metadata)
 

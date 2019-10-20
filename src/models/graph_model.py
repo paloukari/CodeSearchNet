@@ -28,3 +28,4 @@ class GraphModel(Model):
             run_name=run_name,
             model_save_dir=model_save_dir,
             log_save_dir=log_save_dir)
+            

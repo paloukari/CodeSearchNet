@@ -92,7 +92,7 @@ class SeqEncoder(Encoder):
                 yield token
 
     @classmethod
-    def load_metadata_from_sample(cls, data_to_load: Iterable[str], raw_metadata: Dict[str, Any],
+    def load_metadata_from_sample(cls, raw_data: str, data_to_load: Iterable[str], raw_metadata: Dict[str, Any],
                                   use_subtokens: bool=False, mark_subtoken_end: bool=False) -> None:
         if use_subtokens:
             data_to_load = cls._to_subtoken_stream(data_to_load, mark_subtoken_end=mark_subtoken_end)
