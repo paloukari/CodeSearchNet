@@ -1,0 +1,40 @@
+{
+    "root": "/home/dev",
+    "program": "/home/dev/src/train.py",
+    "git": {
+        "remote": "https://github.com/paloukari/CodeSearchNet",
+        "commit": "57ed4f89fd016077bdb36a777a174522fccef785"
+    },
+    "email": "paloukari@hotmail.com",
+    "startedAt": "2019-10-20T02:15:38.193759",
+    "host": "25285b303801",
+    "username": "root",
+    "executable": "/usr/bin/python3",
+    "os": "Linux-4.4.0-164-generic-x86_64-with-Ubuntu-16.04-xenial",
+    "python": "3.6.8",
+    "gpu": "Tesla V100-PCIE-16GB",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": "9.0.176",
+    "args": [
+        "--max-num-epochs",
+        "5",
+        "--max-files-per-dir",
+        "1",
+        "--dryrun",
+        "--sequential",
+        "--model",
+        "ggnn2trans",
+        "/trained_models",
+        "../resources/data/python/final/jsonl/train",
+        "../resources/data/python/final/jsonl/valid",
+        "../resources/data/python/final/jsonl/test"
+    ],
+    "state": "finished",
+    "jobType": null,
+    "mode": "dryrun",
+    "name": "ggnn2trans-2019-10-20-02-15-38",
+    "project": "CodeSearchNet",
+    "heartbeatAt": "2019-10-20T02:15:56.620150",
+    "exitcode": 0
+}
