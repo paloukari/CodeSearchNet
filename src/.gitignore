@@ -5,3 +5,4 @@ azure_auth.json
 *.train_log
 .pt_description_history
 wandb-debug.log
+wandb/dryrun-*
