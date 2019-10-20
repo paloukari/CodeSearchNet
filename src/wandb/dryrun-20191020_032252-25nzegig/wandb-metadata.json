@@ -30,10 +30,11 @@
         "../resources/data/python/final/jsonl/valid",
         "../resources/data/python/final/jsonl/test"
     ],
-    "state": "running",
+    "state": "finished",
     "jobType": null,
     "mode": "dryrun",
     "name": "ggnn2trans-2019-10-20-03-22-52",
     "project": "CodeSearchNet",
-    "heartbeatAt": "2019-10-20T03:23:41.841463"
+    "heartbeatAt": "2019-10-20T03:25:08.933139",
+    "exitcode": 0
 }
