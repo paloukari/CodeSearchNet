@@ -3,6 +3,7 @@ import numpy as np
 from typing import Dict, Any, List, Iterable, Optional, Tuple
 import random
 import re
+from abc import ABC, abstractmethod
 
 from utils.bpevocabulary import BpeVocabulary
 from utils.tfutils import convert_and_pad_token_sequence
@@ -17,7 +18,7 @@ from .encoder import Encoder, QueryType
 class GraphEncoder(Encoder):
     @classmethod
     def get_default_hyperparameters(cls) -> Dict[str, Any]:
-        encoder_hypers = return {
+        encoder_hypers = {
             'max_nodes_in_batch': 50000,
 
             'graph_num_layers': 8,
@@ -68,11 +69,11 @@ class GraphEncoder(Encoder):
             self._make_placeholders()
             self.__make_input_model()
             self.__build_graph_propagation_model()
-            
 
     def __build_graph_propagation_model(self) -> tf.Tensor:
         h_dim = self.params['hidden_size']
-        activation_fn = get_activation(self.params['graph_model_activation_function'])
+        activation_fn = get_activation(
+            self.params['graph_model_activation_function'])
         if self.params['graph_node_label_representation_size'] != self.params['hidden_size']:
             self.ops['projected_node_features'] = \
                 tf.keras.layers.Dense(units=h_dim,
@@ -87,7 +88,8 @@ class GraphEncoder(Encoder):
         for layer_idx in range(self.params['graph_num_layers']):
             with tf.variable_scope('gnn_layer_%i' % layer_idx):
                 cur_node_representations = \
-                    tf.nn.dropout(cur_node_representations, rate=1.0 - self.__placeholders['graph_layer_input_dropout_keep_prob'])
+                    tf.nn.dropout(cur_node_representations, rate=1.0 -
+                                  self.__placeholders['graph_layer_input_dropout_keep_prob'])
                 if layer_idx % self.params['graph_residual_connection_every_num_layers'] == 0:
                     t = cur_node_representations
                     if layer_idx > 0:
@@ -101,7 +103,8 @@ class GraphEncoder(Encoder):
                         self.ops['type_to_num_incoming_edges'],
                         self.params['graph_num_timesteps_per_layer'])
                 if self.params['graph_inter_layer_norm']:
-                    cur_node_representations = tf.contrib.layers.layer_norm(cur_node_representations)
+                    cur_node_representations = tf.contrib.layers.layer_norm(
+                        cur_node_representations)
                 if layer_idx % self.params['graph_dense_between_every_num_gnn_layers'] == 0:
                     cur_node_representations = \
                         tf.keras.layers.Dense(units=h_dim,
@@ -113,7 +116,7 @@ class GraphEncoder(Encoder):
         self.ops['final_node_representations'] = cur_node_representations
 
         # TODO: create  self.ops['code_representations'] from self.ops['final_node_representations']
-    
+
     @abstractmethod
     def _apply_gnn_layer(self,
                          node_representations: tf.Tensor,
@@ -168,7 +171,8 @@ class GraphEncoder(Encoder):
         # Choose kernel sizes such that there is a single value at the end:
         char_conv_l1_kernel_size = 5
         char_conv_l2_kernel_size = \
-            self.params['graph_node_label_max_num_chars'] - 2 * (char_conv_l1_kernel_size - 1)
+            self.params['graph_node_label_max_num_chars'] - \
+            2 * (char_conv_l1_kernel_size - 1)
 
         char_conv_l1 = \
             tf.keras.layers.Conv1D(filters=16,
@@ -184,7 +188,8 @@ class GraphEncoder(Encoder):
                                    kernel_size=char_conv_l2_kernel_size,
                                    activation=tf.nn.leaky_relu,
                                    )(char_pool_l1)                # Shape: [U, 1, D]
-        unique_label_representations = tf.squeeze(char_conv_l2, axis=1)  # Shape: [U, D]
+        unique_label_representations = tf.squeeze(
+            char_conv_l2, axis=1)  # Shape: [U, D]
         node_label_representations = tf.gather(params=unique_label_representations,
                                                indices=node_labels_to_unique_labels)
         return node_label_representations
@@ -193,14 +198,17 @@ class GraphEncoder(Encoder):
 
         node_label_char_length = self.params['graph_node_label_max_num_chars']
         self.placeholders['unique_labels_as_characters'] = \
-            tf.placeholder(dtype=tf.int32, shape=[None, node_label_char_length], name='unique_labels_as_characters')
+            tf.placeholder(dtype=tf.int32, shape=[
+                           None, node_label_char_length], name='unique_labels_as_characters')
         self.placeholders['node_labels_to_unique_labels'] = \
-            tf.placeholder(dtype=tf.int32, shape=[None], name='node_labels_to_unique_labels')
+            tf.placeholder(dtype=tf.int32, shape=[
+                           None], name='node_labels_to_unique_labels')
         self.placeholders['adjacency_lists'] = \
             [tf.placeholder(dtype=tf.int32, shape=[None, 2], name='adjacency_e%s' % e)
                 for e in range(self.num_edge_types)]
         self.placeholders['type_to_num_incoming_edges'] = \
-            tf.placeholder(dtype=tf.float32, shape=[self.num_edge_types, None], name='type_to_num_incoming_edges')
+            tf.placeholder(dtype=tf.float32, shape=[
+                           self.num_edge_types, None], name='type_to_num_incoming_edges')
 
         self.ops['initial_node_features'] = \
             self.__get_node_label_charcnn_embeddings(self.placeholders['unique_labels_as_characters'],

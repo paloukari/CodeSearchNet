@@ -6,4 +6,4 @@ from .conv_seq_encoder import ConvolutionSeqEncoder
 from .conv_self_att_encoder import ConvSelfAttentionEncoder
 
 from .graph_encoder import GraphEncoder
-from .gnn_encoder import GGNN_Model
+from .gnn_encoder import GGNN_Encoder

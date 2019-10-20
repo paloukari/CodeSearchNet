@@ -33,6 +33,29 @@
             ],
             "cwd": "${workspaceFolder}/src",
             "console": "integratedTerminal"
+        }, 
+        {
+            "name": "Python: Debug ggnn2trans",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/train.py",
+            "args": [
+                // "--testrun",
+                "--max-num-epochs",
+                "5",
+                "--max-files-per-dir",
+                "1", 
+                "--dryrun", 
+                "--sequential", 
+                "--model", 
+                "ggnn2trans", 
+                "/trained_models",
+                "../resources/data/python/final/jsonl/train",
+                "../resources/data/python/final/jsonl/valid",
+                "../resources/data/python/final/jsonl/test"
+            ],
+            "cwd": "${workspaceFolder}/src",
+            "console": "integratedTerminal"
         }
     ]
 }

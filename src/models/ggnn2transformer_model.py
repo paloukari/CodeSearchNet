@@ -1,16 +1,16 @@
 from typing import Any, Dict, Optional
 
-from encoders import GraphEncoder
-from .model import Model
+from encoders import GGNN_Encoder, ConvSelfAttentionEncoder
+from models import Graph2TransformerModel
 
+class GGNN2TransformerModel(Graph2TransformerModel):
 
-class GraphModel(Model):
     @classmethod
     def get_default_hyperparameters(cls) -> Dict[str, Any]:
         hypers = {}
         for label in ["code", "query"]:
             hypers.update({f'{label}_{key}': value
-                           for key, value in GraphEncoder.get_default_hyperparameters().items()})
+                           for key, value in GGNN_Encoder.get_default_hyperparameters().items()})
         model_hypers = {
             'learning_rate': 5e-4,
             'code_use_subtokens': False,
@@ -28,7 +28,7 @@ class GraphModel(Model):
                  log_save_dir: Optional[str] = None):
         super().__init__(
             hyperparameters,
-            code_encoder_type=GraphEncoder,
+            code_encoder_type=GGNN_Encoder,
             query_encoder_type=ConvSelfAttentionEncoder,
             run_name=run_name,
             model_save_dir=model_save_dir,
