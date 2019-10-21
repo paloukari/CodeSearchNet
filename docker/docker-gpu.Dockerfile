@@ -60,7 +60,8 @@ RUN pip --no-cache-dir install --upgrade \
     tqdm==4.34.0 \
     typed_ast==1.4.0 \
     wandb==0.8.12 \
-    wget==3.2
+    wget==3.2 \
+    tree-sitter==0.0.8
 
 ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
 
@@ -80,5 +81,5 @@ RUN apt-get --yes install openssh-server
 ENTRYPOINT service ssh restart && bash
 
 # Install the ssh public key - Remove this in a production deployment
-COPY ./keys/id_rsa.pub /tmp/tmp.pub 
+COPY ./.keys/id_rsa.pub /tmp/tmp.pub 
 RUN mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat /tmp/tmp.pub >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && rm -f /tmp/tmp.pub

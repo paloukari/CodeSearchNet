@@ -26,3 +26,10 @@ resources/
 /src/wandb/debug.log
 *.html
 src/wandb/settings
+
+# docker access keys
+.keys/
+
+# tree-sitter parsers
+.vendor/
+.build/
