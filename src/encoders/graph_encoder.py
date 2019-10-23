@@ -6,13 +6,29 @@ import re
 from abc import ABC, abstractmethod
 
 from utils.bpevocabulary import BpeVocabulary
-from utils.tfutils import convert_and_pad_token_sequence
+from utils.tfutils import convert_and_pad_token_sequence, get_activation
 
 import tensorflow as tf
-from dpu_utils.codeutils import split_identifier_into_parts
+from dpu_utils.codeutils import split_identifier_into_parts, get_language_keywords
 from dpu_utils.mlutils import Vocabulary
 
 from .encoder import Encoder, QueryType
+
+ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789,;.!?:'\"/\\|_@#$%^&*~`+-=<>()[]{}"
+ALPHABET_DICT = {char: idx + 2 for (idx, char) in enumerate(ALPHABET)}  # "0" is PAD, "1" is UNK
+ALPHABET_DICT["PAD"] = 0
+ALPHABET_DICT["UNK"] = 1
+USES_SUBTOKEN_EDGE_NAME = "UsesSubtoken"
+SELF_LOOP_EDGE_NAME = "SelfLoop"
+BACKWARD_EDGE_TYPE_NAME_SUFFIX = "_Bkwd"
+__PROGRAM_GRAPH_EDGES_TYPES = ["Child", "NextToken", "LastUse", "LastWrite", "LastLexicalUse", "ComputedFrom",
+                               "GuardedByNegation", "GuardedBy", "FormalArgName", "ReturnsTo", USES_SUBTOKEN_EDGE_NAME]
+__PROGRAM_GRAPH_EDGES_TYPES_WITH_BKWD = \
+    __PROGRAM_GRAPH_EDGES_TYPES + [edge_type_name + BACKWARD_EDGE_TYPE_NAME_SUFFIX
+                                   for edge_type_name in __PROGRAM_GRAPH_EDGES_TYPES]
+PROGRAM_GRAPH_EDGES_TYPES_VOCAB = {edge_type_name: idx
+                                   for idx, edge_type_name in enumerate(__PROGRAM_GRAPH_EDGES_TYPES_WITH_BKWD)}
+
 
 
 class GraphEncoder(Encoder):
@@ -40,13 +56,41 @@ class GraphEncoder(Encoder):
             'momentum': 0.85,
             'clamp_gradient_norm': 1.0,
             'random_seed': 0,
+            
+            # SeqEncoder
+            'token_vocab_size': 10000,
+            'token_vocab_count_threshold': 10,
+            'token_embedding_size': 128,
+
+            'use_subtokens': False,
+            'mark_subtoken_end': False,
+
+            'max_num_tokens': 200,
+            
+            'use_bpe':True,
+            'pct_bpe': 0.5, 
+            # VarMisuse
+            'max_variable_candidates': 5,
+            'graph_node_label_max_num_chars': 19,
+            'graph_node_label_representation_size': 64,
+            'slot_score_via_linear_layer': True,
+            'loss_function': 'max-likelihood',  # max-likelihood or max-margin
+            'max-margin_loss_margin': 0.2,
+            'out_layer_dropout_rate': 0.2,
+            'add_self_loop_edges': False,
         }
         hypers = super().get_default_hyperparameters()
         hypers.update(encoder_hypers)
         return hypers
 
     def __init__(self, label: str, hyperparameters: Dict[str, Any], metadata: Dict[str, Any]):
-        super().__init__(label, hyperparameters, metadata)
+        super().__init__(label, hyperparameters, metadata)    
+
+                # If required, add the self-loop edge type to the vocab:
+        if hyperparameters.get('code_add_self_loop_edges'):
+            if SELF_LOOP_EDGE_NAME not in PROGRAM_GRAPH_EDGES_TYPES_VOCAB:
+                PROGRAM_GRAPH_EDGES_TYPES_VOCAB[SELF_LOOP_EDGE_NAME] = \
+                    len(PROGRAM_GRAPH_EDGES_TYPES_VOCAB)    
 
     def _make_placeholders(self):
         """
@@ -58,49 +102,47 @@ class GraphEncoder(Encoder):
         self.placeholders['graph_layer_input_dropout_keep_prob'] = \
             tf.placeholder_with_default(
                 1.0, shape=[], name='graph_layer_input_dropout_keep_prob')
+    @property
+    def num_edge_types(self) -> int:
+        return len(PROGRAM_GRAPH_EDGES_TYPES_VOCAB)
+
+    @property
+    def initial_node_feature_size(self) -> int:
+        return self.params['graph_node_label_representation_size']
 
     @property
     def output_representation_size(self):
-        # TODO: fix this
-        return self.get_hyper('self_attention_hidden_size')
+        return self.get_hyper('hidden_size')
 
     def make_model(self, is_train: bool = False) -> tf.Tensor:
         with tf.variable_scope("graph_encoder"):
             self._make_placeholders()
-            self.__make_input_model()
-            self.__build_graph_propagation_model()
-            # TODO: create self.ops['code_representations'] from self.ops['final_node_representations']
-            #if self.params['graph_node_label_representation_size'] != self.params['hidden_size']:
-            # self.ops['projected_node_features'] = \
-            #     tf.keras.layers.Dense(units=h_dim,
-            #                           use_bias=False,
-            #                           activation=activation_fn,
-            #                           )(self.ops['initial_node_features'])
-            return self.ops['final_node_representations']
+            model = self.__make_input_model()
+            model = self.__build_graph_propagation_model(model)
+            return model
+            
+    def __build_graph_propagation_model(self, model: tf.Tensor) -> tf.Tensor:
+        _propagation_model = None
 
-
-
-    def __build_graph_propagation_model(self) -> tf.Tensor:
-        h_dim = self.params['hidden_size']
+        h_dim = self.get_hyper('hidden_size')
         activation_fn = get_activation(
-            self.params['graph_model_activation_function'])
-        if self.params['graph_node_label_representation_size'] != self.params['hidden_size']:
-            self.ops['projected_node_features'] = \
-                tf.keras.layers.Dense(units=h_dim,
+            self.get_hyper('graph_model_activation_function'))
+        if self.get_hyper('graph_node_label_representation_size') != self.get_hyper('hidden_size'):
+            _propagation_model = tf.keras.layers.Dense(units=h_dim,
                                       use_bias=False,
                                       activation=activation_fn,
-                                      )(self.ops['initial_node_features'])
+                                      )(model)
         else:
-            self.ops['projected_node_features'] = self.ops['initial_node_features']
+            _propagation_model = model
 
-        cur_node_representations = self.ops['projected_node_features']
+        cur_node_representations = _propagation_model
         last_residual_representations = tf.zeros_like(cur_node_representations)
-        for layer_idx in range(self.params['graph_num_layers']):
+        for layer_idx in range(self.get_hyper('graph_num_layers')):
             with tf.variable_scope('gnn_layer_%i' % layer_idx):
                 cur_node_representations = \
-                    tf.nn.dropout(cur_node_representations, rate=1.0 -
-                                  self.__placeholders['graph_layer_input_dropout_keep_prob'])
-                if layer_idx % self.params['graph_residual_connection_every_num_layers'] == 0:
+                    tf.nn.dropout(cur_node_representations, 
+                    keep_prob=self.placeholders['graph_layer_input_dropout_keep_prob'])
+                if layer_idx % self.get_hyper('graph_residual_connection_every_num_layers') == 0:
                     t = cur_node_representations
                     if layer_idx > 0:
                         cur_node_representations += last_residual_representations
@@ -109,13 +151,13 @@ class GraphEncoder(Encoder):
                 cur_node_representations = \
                     self._apply_gnn_layer(
                         cur_node_representations,
-                        self.ops['adjacency_lists'],
-                        self.ops['type_to_num_incoming_edges'],
-                        self.params['graph_num_timesteps_per_layer'])
-                if self.params['graph_inter_layer_norm']:
+                        self.placeholders['adjacency_lists'],
+                        self.placeholders['type_to_num_incoming_edges'],
+                        self.get_hyper('graph_num_timesteps_per_layer'))
+                if self.get_hyper('graph_inter_layer_norm'):
                     cur_node_representations = tf.contrib.layers.layer_norm(
                         cur_node_representations)
-                if layer_idx % self.params['graph_dense_between_every_num_gnn_layers'] == 0:
+                if layer_idx % self.get_hyper('graph_dense_between_every_num_gnn_layers') == 0:
                     cur_node_representations = \
                         tf.keras.layers.Dense(units=h_dim,
                                               use_bias=False,
@@ -123,7 +165,7 @@ class GraphEncoder(Encoder):
                                               name="Dense",
                                               )(cur_node_representations)
 
-        self.ops['final_node_representations'] = cur_node_representations
+        return cur_node_representations
 
     @abstractmethod
     def _apply_gnn_layer(self,
@@ -168,9 +210,9 @@ class GraphEncoder(Encoder):
             float32 tensor of shape [V, D] representing embedded node
             label information about each node.
         """
-        label_embedding_size = self.params['graph_node_label_representation_size']  # D
+        label_embedding_size = self.get_hyper('graph_node_label_representation_size')  # D
         # U ~ num unique labels
-        # C ~ num characters (self.params['graph_node_label_max_num_chars'])
+        # C ~ num characters (self.get_hyper('graph_node_label_max_num_chars'))
         # A ~ num characters in alphabet
         unique_label_chars_one_hot = tf.one_hot(indices=unique_labels_as_characters,
                                                 depth=len(ALPHABET),
@@ -179,7 +221,7 @@ class GraphEncoder(Encoder):
         # Choose kernel sizes such that there is a single value at the end:
         char_conv_l1_kernel_size = 5
         char_conv_l2_kernel_size = \
-            self.params['graph_node_label_max_num_chars'] - \
+            self.get_hyper('graph_node_label_max_num_chars') - \
             2 * (char_conv_l1_kernel_size - 1)
 
         char_conv_l1 = \
@@ -204,7 +246,7 @@ class GraphEncoder(Encoder):
 
     def __make_input_model(self) -> None:
 
-        node_label_char_length = self.params['graph_node_label_max_num_chars']
+        node_label_char_length = self.get_hyper('graph_node_label_max_num_chars')
         self.placeholders['unique_labels_as_characters'] = \
             tf.placeholder(dtype=tf.int32, shape=[
                            None, node_label_char_length], name='unique_labels_as_characters')
@@ -218,11 +260,10 @@ class GraphEncoder(Encoder):
             tf.placeholder(dtype=tf.float32, shape=[
                            self.num_edge_types, None], name='type_to_num_incoming_edges')
 
-        self.ops['initial_node_features'] = \
-            self.__get_node_label_charcnn_embeddings(self.placeholders['unique_labels_as_characters'],
+        return self.__get_node_label_charcnn_embeddings(self.placeholders['unique_labels_as_characters'],
                                                      self.placeholders['node_labels_to_unique_labels'])
-        self.ops['adjacency_lists'] = self.placeholders['adjacency_lists']
-        self.ops['type_to_num_incoming_edges'] = self.placeholders['type_to_num_incoming_edges']
+        # self.ops['adjacency_lists'] = self.placeholders['adjacency_lists']
+        # self.ops['type_to_num_incoming_edges'] = self.placeholders['type_to_num_incoming_edges']
 
     # TODO: remove/refactor this
     # def embedding_layer(self, token_inp: tf.Tensor) -> tf.Tensor:
@@ -247,7 +288,7 @@ class GraphEncoder(Encoder):
     #     token_embeddings = tf.nn.dropout(token_embeddings,
     #                                      keep_prob=self.placeholders['dropout_keep_rate'])
 
-    #     return tf.nn.embedding_lookup(params=token_embeddings, ids=token_inp)
+    #     return tf.nn.embedding_lookup(hypers=token_embeddings, ids=token_inp)
 
     @classmethod
     def init_metadata(cls) -> Dict[str, Any]:
@@ -264,25 +305,35 @@ class GraphEncoder(Encoder):
                     yield '</id>'
             else:
                 yield token
-
+    
+    
     @classmethod
     def load_metadata_from_sample(cls, sample: Dict[str, Any], data_to_load: Iterable[str], raw_metadata: Dict[str, Any],
                                   use_subtokens: bool = False, mark_subtoken_end: bool = False) -> None:
 
-        # TODO: load the code (graph?) metadata
         if use_subtokens:
             data_to_load = cls._to_subtoken_stream(
                 data_to_load, mark_subtoken_end=mark_subtoken_end)
         raw_metadata['token_counter'].update(data_to_load)
 
+        # TODO: validate the list of unsplitted tokens
+
+
     @classmethod
-    def finalise_metadata(cls, encoder_label: str, hyperparameters: Dict[str, Any], raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def finalise_metadata(cls, encoder_label: str, language : str, hyperparameters: Dict[str, Any], raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+        
+        unsplittable_keywords = get_language_keywords(language)
         final_metadata = super().finalise_metadata(
-            encoder_label, hyperparameters, raw_metadata_list)
+            encoder_label, language, hyperparameters, raw_metadata_list)
         merged_token_counter = Counter()
         for raw_metadata in raw_metadata_list:
             merged_token_counter += raw_metadata['token_counter']
 
+        #graph_node_labels = sample['graph_V']
+        for token in list(merged_token_counter):
+            if token in unsplittable_keywords:
+                del merged_token_counter[token]
+            
         if hyperparameters['%s_use_bpe' % encoder_label]:
             token_vocabulary = BpeVocabulary(vocab_size=hyperparameters['%s_token_vocab_size' % encoder_label],
                                              pct_bpe=hyperparameters['%s_pct_bpe' %
@@ -295,6 +346,7 @@ class GraphEncoder(Encoder):
                                                                                      encoder_label],
                                                             count_threshold=hyperparameters['%s_token_vocab_count_threshold' % encoder_label])
 
+        # TODO: update the edges based on the calculated tokens
         final_metadata['token_vocab'] = token_vocabulary
         # Save the most common tokens for use in data augmentation:
         final_metadata['common_tokens'] = merged_token_counter.most_common(50)
@@ -415,6 +467,16 @@ class GraphEncoder(Encoder):
         return False
 
     # TODO: remove/refactor this
-    # def get_token_embeddings(self) -> Tuple[tf.Tensor, List[str]]:
-    #     return (self.__embeddings,
-    #             list(self.metadata['token_vocab'].id_to_token))
+    def get_token_embeddings(self) -> Tuple[tf.Tensor, List[str]]:
+        return (self.__embeddings,
+                list(self.metadata['token_vocab'].id_to_token))
+
+    def init_minibatch(self, batch_data: Dict[str, Any]) -> None:
+        super().init_minibatch(batch_data)
+        batch_data['tokens'] = []
+        batch_data['tokens_mask'] = []
+
+    def minibatch_to_feed_dict(self, batch_data: Dict[str, Any], feed_dict: Dict[tf.Tensor, Any], is_train: bool) -> None:
+        super().minibatch_to_feed_dict(batch_data, feed_dict, is_train)
+        write_to_feed_dict(feed_dict, self.placeholders['tokens'], batch_data['tokens'])
+        write_to_feed_dict(feed_dict, self.placeholders['tokens_mask'], batch_data['tokens_mask'])

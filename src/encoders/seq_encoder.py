@@ -99,8 +99,8 @@ class SeqEncoder(Encoder):
         raw_metadata['token_counter'].update(data_to_load)
 
     @classmethod
-    def finalise_metadata(cls, encoder_label: str, hyperparameters: Dict[str, Any], raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
-        final_metadata = super().finalise_metadata(encoder_label, hyperparameters, raw_metadata_list)
+    def finalise_metadata(cls, encoder_label: str, language : str, hyperparameters: Dict[str, Any], raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+        final_metadata = super().finalise_metadata(encoder_label, language, hyperparameters, raw_metadata_list)
         merged_token_counter = Counter()
         for raw_metadata in raw_metadata_list:
             merged_token_counter += raw_metadata['token_counter']

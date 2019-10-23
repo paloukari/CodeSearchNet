@@ -408,7 +408,11 @@ class Model(ABC):
                                                                    self.hyperparameters['code_mark_subtoken_end'])
                 self.__query_encoder_type.load_metadata_from_sample(raw_sample, [d.lower() for d in raw_sample['docstring_tokens']],
                                                                     raw_query_metadata)
+                # TODO: remove this
+                break
+
             yield (raw_query_metadata, per_code_language_metadata)
+            
 
         def received_result_callback(metadata_parser_result: Tuple[Dict[str, Any], Dict[str, Dict[str, Any]]]):
             (raw_query_metadata, per_code_language_metadata) = metadata_parser_result
@@ -429,10 +433,10 @@ class Model(ABC):
                 for res in metadata_parser_fn(idx, file):
                     received_result_callback(res)
 
-        self.__query_metadata = self.__query_encoder_type.finalise_metadata("query", self.hyperparameters, raw_query_metadata_list)
+        self.__query_metadata = self.__query_encoder_type.finalise_metadata("query", "English", self.hyperparameters, raw_query_metadata_list)
         for (language, raw_per_language_metadata) in raw_code_language_metadata_lists.items():
             self.__per_code_language_metadata[language] = \
-                self.__code_encoder_type.finalise_metadata("code", self.hyperparameters, raw_per_language_metadata)
+                self.__code_encoder_type.finalise_metadata("code", language, self.hyperparameters, raw_per_language_metadata)
 
     def load_existing_metadata(self, metadata_path: RichPath):
         saved_data = metadata_path.read_by_file_suffix()

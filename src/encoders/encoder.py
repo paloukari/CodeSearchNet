@@ -120,7 +120,7 @@ class Encoder(ABC):
 
     @classmethod
     @abstractmethod
-    def finalise_metadata(cls, encoder_label: str, hyperparameters: Dict[str, Any], raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def finalise_metadata(cls, encoder_label: str, language : str, hyperparameters: Dict[str, Any], raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Called to finalise the metadata after looking at actual data (i.e., compute vocabularies, ...)
 

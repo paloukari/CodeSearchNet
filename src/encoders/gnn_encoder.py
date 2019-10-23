@@ -42,9 +42,9 @@ class GGNN_Encoder(GraphEncoder):
         return sparse_ggnn_layer(
             node_embeddings=node_representations,
             adjacency_lists=adjacency_lists,
-            state_dim=self.params['hidden_size'],
+            state_dim=self.hyperparameters['code_hidden_size'],
             num_timesteps=num_timesteps,
-            gated_unit_type=self.params['graph_rnn_cell'],
-            activation_function=self.params['graph_activation_function'],
-            message_aggregation_function=self.params['message_aggregation_function'],
+            gated_unit_type=self.hyperparameters['code_graph_rnn_cell'],
+            activation_function=self.hyperparameters['code_graph_activation_function'],
+            message_aggregation_function=self.hyperparameters['code_message_aggregation_function'],
         )
