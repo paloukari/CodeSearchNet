@@ -102,12 +102,13 @@ class Encoder(ABC):
 
     @classmethod
     @abstractmethod
-    def load_metadata_from_sample(cls, raw_data: str, data_to_load: Any, raw_metadata: Dict[str, Any],
+    def load_metadata_from_sample(cls, sample: Dict[str, Any], data_to_load: Any, raw_metadata: Dict[str, Any],
                                   use_subtokens: bool=False, mark_subtoken_end: bool=False) -> None:
         """
         Called to load metadata from a single sample.
 
         Args:
+            sample: The Dictionary containing all related sample data
             raw_data: The unprocessed original string
             data_to_load: Raw data to load; type depens on encoder. Usually comes from a data parser such as
              tokenize_python_from_string or tokenize_docstring_from_string.

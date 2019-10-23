@@ -266,7 +266,7 @@ class GraphEncoder(Encoder):
                 yield token
 
     @classmethod
-    def load_metadata_from_sample(cls, raw_data: str, data_to_load: Iterable[str], raw_metadata: Dict[str, Any],
+    def load_metadata_from_sample(cls, sample: Dict[str, Any], data_to_load: Iterable[str], raw_metadata: Dict[str, Any],
                                   use_subtokens: bool = False, mark_subtoken_end: bool = False) -> None:
 
         # TODO: load the code (graph?) metadata
