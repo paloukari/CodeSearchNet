@@ -36,7 +36,7 @@ class GGNN_Encoder(GraphEncoder):
 
     def _apply_gnn_layer(self,
                          node_representations: tf.Tensor,
-                         adjacency_lists: List[tf.Tensor],
+                         adjacency_lists: Dict[int, tf.Tensor],
                          type_to_num_incoming_edges: tf.Tensor,
                          num_timesteps: int) -> tf.Tensor:
         return sparse_ggnn_layer(

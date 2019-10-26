@@ -59,7 +59,12 @@ def write_to_feed_dict(feed_dict: Dict[tf.Tensor, Any], placeholder, val) -> Non
         ph_shape = [dim if dim is not None else 0 for dim in placeholder.shape.as_list()]
         feed_dict[placeholder] = np.empty(ph_shape)
     else:
-        feed_dict[placeholder] = val
+        if type(placeholder) == dict and type(val) == dict:
+            # TODO: verify that all keys are there
+            for _id, _tensor in val.items():
+                feed_dict[placeholder[_id]] = _tensor
+        else:
+            feed_dict[placeholder] = val
 
 
 class NoisyIdentityInitializer(Initializer):

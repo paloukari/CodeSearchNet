@@ -138,6 +138,7 @@ class Encoder(ABC):
     @abstractmethod
     def load_data_from_sample(cls,
                               encoder_label: str,
+                              raw_sample:Dict[str, Any],
                               hyperparameters: Dict[str, Any],
                               metadata: Dict[str, Any],
                               data_to_load: Any,

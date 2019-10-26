@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import tensorflow as tf
 
@@ -6,7 +6,7 @@ from utils import get_gated_unit, get_aggregation_function
 
 
 def sparse_ggnn_layer(node_embeddings: tf.Tensor,
-                      adjacency_lists: List[tf.Tensor],
+                      adjacency_lists: Dict[int, tf.Tensor],
                       state_dim: Optional[int],
                       num_timesteps: int = 1,
                       gated_unit_type: str = "gru",
@@ -56,7 +56,7 @@ def sparse_ggnn_layer(node_embeddings: tf.Tensor,
     gated_cell = get_gated_unit(state_dim, gated_unit_type, activation_function)
     edge_type_to_message_transformation_layers = []  # Layers to compute the message from a source state
     edge_type_to_message_targets = []  # List of tensors of message targets
-    for edge_type_idx, adjacency_list_for_edge_type in enumerate(adjacency_lists):
+    for edge_type_idx, adjacency_list_for_edge_type in adjacency_lists.items():
         edge_type_to_message_transformation_layers.append(
             tf.keras.layers.Dense(units=state_dim,
                                   use_bias=False,
@@ -73,7 +73,7 @@ def sparse_ggnn_layer(node_embeddings: tf.Tensor,
         message_source_states = []  # list of tensors of edge source states of shape [E, D]
 
         # Collect incoming messages per edge type
-        for edge_type_idx, adjacency_list_for_edge_type in enumerate(adjacency_lists):
+        for edge_type_idx, adjacency_list_for_edge_type in adjacency_lists.items():
             edge_sources = adjacency_list_for_edge_type[:, 0]
             edge_source_states = tf.nn.embedding_lookup(params=cur_node_states,
                                                         ids=edge_sources)  # Shape [E, D]

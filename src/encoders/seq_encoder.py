@@ -124,6 +124,7 @@ class SeqEncoder(Encoder):
     def load_data_from_sample(cls,
                               encoder_label: str,
                               hyperparameters: Dict[str, Any],
+                              raw_sample:Dict[str, Any],
                               metadata: Dict[str, Any],
                               data_to_load: Any,
                               function_name: Optional[str],
