@@ -553,11 +553,19 @@ class GraphEncoder(Encoder):
     def minibatch_to_feed_dict(self, batch_data: Dict[str, Any], feed_dict: Dict[tf.Tensor, Any], is_train: bool) -> None:
         super().minibatch_to_feed_dict(batch_data, feed_dict, is_train)
 
+        adjacency_lists = batch_data['code_adjacency_lists']
+        num_edges = 0
+        for i in range(self.num_edge_types):
+            if len(adjacency_lists[i]) > 0:
+                adjacency_lists[i] = np.concatenate(adjacency_lists[i])
+            else:
+                adjacency_lists[i] = np.zeros((0, 2), dtype=np.int32)
+            num_edges += adjacency_lists[i].shape[0]
         write_to_feed_dict(
-            feed_dict, self.placeholders['type_to_num_incoming_edges'], batch_data['code_type_to_num_incoming_edges'])
+            feed_dict, self.placeholders['type_to_num_incoming_edges'],  np.concatenate(batch_data['code_type_to_num_incoming_edges'], axis=1))
         write_to_feed_dict(
-            feed_dict, self.placeholders['adjacency_lists'], batch_data['code_adjacency_lists'])
+            feed_dict, self.placeholders['adjacency_lists'], adjacency_lists)
         write_to_feed_dict(
-            feed_dict, self.placeholders['unique_labels_as_characters'], batch_data['code_unique_labels_as_characters'])
+            feed_dict, self.placeholders['unique_labels_as_characters'],  np.concatenate(batch_data['code_unique_labels_as_characters'], axis=0))
         write_to_feed_dict(
-            feed_dict, self.placeholders['node_labels_to_unique_labels'], batch_data['code_node_labels_to_unique_labels'])
+            feed_dict, self.placeholders['node_labels_to_unique_labels'],  np.concatenate(batch_data['code_node_labels_to_unique_labels'], axis=0))

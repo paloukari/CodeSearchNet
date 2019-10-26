@@ -735,7 +735,7 @@ class Model(ABC):
                          samples_used_so_far - samples_in_batch, loss, mrr),
                       flush=True,
                       end="\r" if not quiet else '\n')
-                printed_one_line = True
+                printed_one_lcode_query_cooccurrence_logitsine = True
             ops_to_run = {'loss': self.__ops['loss'], 'mrr': self.__ops['mrr']}
             if is_train:
                 ops_to_run['train_step'] = self.__ops['train_step']
