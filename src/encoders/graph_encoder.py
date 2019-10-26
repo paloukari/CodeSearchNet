@@ -33,7 +33,7 @@ PROGRAM_GRAPH_EDGES_TYPES_VOCAB = {edge_type_name: idx
 
 
 class GraphEncoder(Encoder):
-    
+
     unsplittable_keywords = None
 
     @classmethod
@@ -125,7 +125,20 @@ class GraphEncoder(Encoder):
             self._make_placeholders()
             model = self.__make_input_model()
             model = self.__build_graph_propagation_model(model)
+            model = self.__make_final_layer(model)
             return model
+
+    def __make_final_layer(self, model: tf.Tensor) -> tf.Tensor:
+
+        self.placeholders['graph_nodes_list'] = \
+            tf.placeholder(dtype=tf.int32, shape=[None], name='graph_nodes_list')
+
+        # Sum up all nodes per-graph
+        per_graph_outputs = tf.unsorted_segment_sum(data=model,
+                                                    segment_ids=self.placeholders['graph_nodes_list'],
+                                                    num_segments=self.placeholders['num_graphs'])
+        per_graph_outputs = tf.squeeze(per_graph_outputs)  # [g]
+        return per_graph_outputs
 
     def __build_graph_propagation_model(self, model: tf.Tensor) -> tf.Tensor:
         _propagation_model = None
@@ -262,7 +275,7 @@ class GraphEncoder(Encoder):
                            None], name='node_labels_to_unique_labels')
         self.placeholders['adjacency_lists'] = \
             dict((e, tf.placeholder(dtype=tf.int32, shape=[None, 2], name='adjacency_e%s' % e))
-                for e in range(self.num_edge_types))
+                 for e in range(self.num_edge_types))
         self.placeholders['type_to_num_incoming_edges'] = \
             tf.placeholder(dtype=tf.float32, shape=[
                            self.num_edge_types, None], name='type_to_num_incoming_edges')
@@ -272,62 +285,6 @@ class GraphEncoder(Encoder):
                                                      self.placeholders['node_labels_to_unique_labels'])
 
         return self.placeholders['initial_node_features']
-
-        # self.placeholders['initial_node_features'] = \
-        #     tf.placeholder(dtype=tf.float32, shape=[None, self.initial_node_feature_size], name='initial_node_features')
-        # self.placeholders['adjacency_lists'] = \
-        #     [tf.placeholder(dtype=tf.int32, shape=[None, 2], name='adjacency_e%s' % e)
-        #         for e in range(self.num_edge_types)]
-        # self.placeholders['type_to_num_incoming_edges'] = \
-        #     tf.placeholder(dtype=tf.float32, shape=[self.num_edge_types, None], name='type_to_num_incoming_edges')
-
-        # model_ops['initial_node_features'] = self.placeholders['initial_node_features']
-        # model_ops['adjacency_lists'] = self.placeholders['adjacency_lists']
-        # model_ops['type_to_num_incoming_edges'] = self.placeholders['type_to_num_incoming_edges']
-
-        # node_label_char_length = self.get_hyper('graph_node_label_max_num_chars')
-        # self.placeholders['unique_labels_as_characters'] = \
-        #     tf.placeholder(dtype=tf.int32, shape=[
-        #                    None, node_label_char_length], name='unique_labels_as_characters')
-        # self.placeholders['node_labels_to_unique_labels'] = \
-        #     tf.placeholder(dtype=tf.int32, shape=[
-        #                    None], name='node_labels_to_unique_labels')
-        # self.placeholders['adjacency_lists'] = \
-        #     [tf.placeholder(dtype=tf.int32, shape=[None, 2], name='adjacency_e%s' % e)
-        #         for e in range(self.num_edge_types)]
-        # self.placeholders['type_to_num_incoming_edges'] = \
-        #     tf.placeholder(dtype=tf.float32, shape=[
-        #                    self.num_edge_types, None], name='type_to_num_incoming_edges')
-
-        # return self.__get_node_label_charcnn_embeddings(self.placeholders['unique_labels_as_characters'],
-        #                                              self.placeholders['node_labels_to_unique_labels'])
-        # self.ops['adjacency_lists'] = self.placeholders['adjacency_lists']
-        # self.ops['type_to_num_incoming_edges'] = self.placeholders['type_to_num_incoming_edges']
-
-    # TODO: remove/refactor this
-    # def embedding_layer(self, token_inp: tf.Tensor) -> tf.Tensor:
-    #     # TODO: this meeds to change/go
-    #     """
-    #     Creates embedding layer that is in common between many encoders.
-
-    #     Args:
-    #         token_inp:  2D tensor that is of shape (batch size, sequence length)
-
-    #     Returns:
-    #         3D tensor of shape (batch size, sequence length, embedding dimension)
-    #     """
-
-    #     token_embeddings = tf.get_variable(name='token_embeddings',
-    #                                        initializer=tf.glorot_uniform_initializer(),
-    #                                        shape=[len(self.metadata['token_vocab']),
-    #                                               self.get_hyper('token_embedding_size')],
-    #                                        )
-    #     self.__embeddings = token_embeddings
-
-    #     token_embeddings = tf.nn.dropout(token_embeddings,
-    #                                      keep_prob=self.placeholders['dropout_keep_rate'])
-
-    #     return tf.nn.embedding_lookup(hypers=token_embeddings, ids=token_inp)
 
     @classmethod
     def init_metadata(cls) -> Dict[str, Any]:
@@ -358,10 +315,10 @@ class GraphEncoder(Encoder):
 
     @classmethod
     def finalise_metadata(cls, encoder_label: str, language: str, hyperparameters: Dict[str, Any], raw_metadata_list: List[Dict[str, Any]]) -> Dict[str, Any]:
-        
-        #TODO: move this to init
-        if not cls.unsplittable_keywords: 
-            cls.unsplittable_keywords = get_language_keywords(language)            
+
+        # TODO: move this to init
+        if not cls.unsplittable_keywords:
+            cls.unsplittable_keywords = get_language_keywords(language)
 
         final_metadata = super().finalise_metadata(
             encoder_label, language, hyperparameters, raw_metadata_list)
@@ -369,7 +326,7 @@ class GraphEncoder(Encoder):
         for raw_metadata in raw_metadata_list:
             merged_token_counter += raw_metadata['token_counter']
 
-        #graph_node_labels = sample['graph_V']
+        # graph_node_labels = sample['graph_V']
         for token in list(merged_token_counter):
             if token in cls.unsplittable_keywords:
                 del merged_token_counter[token]
@@ -394,7 +351,7 @@ class GraphEncoder(Encoder):
 
     @classmethod
     def _add_per_subtoken_nodes(cls, graph_dict: Dict[str, Any]) -> None:
-        
+
         graph_node_labels = graph_dict['graph_V']
         subtoken_to_using_nodes = defaultdict(set)
 
@@ -417,8 +374,8 @@ class GraphEncoder(Encoder):
             subtoken_node_id += 1
             graph_node_labels.extend(subtoken)
             graph_dict['graph_E'].extend([[USES_SUBTOKEN_EDGE_NAME, using_node_id, subtoken_node_id]
-                               for using_node_id in using_nodes])
-     
+                                          for using_node_id in using_nodes])
+
         return
 
     @classmethod
@@ -445,12 +402,13 @@ class GraphEncoder(Encoder):
                 len(function_name) >= hyperparameters['min_len_func_name_for_query']:
             # In the code, replace the function name with the out-of-vocab token everywhere it appears:
             data_holder[QueryType.FUNCTION_NAME.value] = [Vocabulary.get_unk() if token == function_name else token
-                                                              for token in data_to_load]
+                                                          for token in data_to_load]
 
         cls._add_per_subtoken_nodes(raw_sample)
         num_nodes = len(raw_sample['graph_V'])
 
-        graph_node_label_max_num_chars = hyperparameters[f'{encoder_label}_graph_node_label_max_num_chars']
+        graph_node_label_max_num_chars = hyperparameters[
+            f'{encoder_label}_graph_node_label_max_num_chars']
         node_label_chars = np.zeros(shape=(num_nodes, graph_node_label_max_num_chars),
                                     dtype=np.uint8)
         for (node, label) in enumerate(raw_sample['graph_V']):
@@ -458,17 +416,17 @@ class GraphEncoder(Encoder):
                 node_label_chars[int(node), char_idx] = ALPHABET_DICT.get(
                     label_char, 1)
         node_label_chars_unique, node_label_chars_indices = np.unique(node_label_chars,
-                                                                        axis=0,
-                                                                        return_inverse=True)
+                                                                      axis=0,
+                                                                      return_inverse=True)
 
         # Split edges according to edge_type and count their numbers:
         num_edge_types = len(PROGRAM_GRAPH_EDGES_TYPES_VOCAB)
         adjacency_lists = dict((_, np.zeros((0, 2), dtype=np.int32))
-                            for _ in range(num_edge_types))
+                               for _ in range(num_edge_types))
         num_incoming_edges_per_type = np.zeros(
             (num_edge_types, num_nodes), dtype=np.uint16)
-        
-        # convert adjacency list to dense representation 
+
+        # convert adjacency list to dense representation
         raw_edges: DefaultDict[str, List] = defaultdict(list)
         for raw_edge in raw_sample['graph_E']:
             e_type = raw_edge[0]
@@ -502,12 +460,12 @@ class GraphEncoder(Encoder):
                     [np.arange(num_nodes), np.arange(num_nodes)], axis=1)
             num_incoming_edges_per_type[self_loop_edge_type_idx, :] = \
                 np.ones(shape=(num_nodes,))
-        
+
         # It's always encoder_label == 'code'
-        result_holder[f'code_adjacency_lists']=adjacency_lists
-        result_holder[f'code_type_to_num_incoming_edges']=num_incoming_edges_per_type
-        result_holder[f'code_unique_labels_as_characters']=node_label_chars_unique
-        result_holder[f'code_node_labels_to_unique_labels']=node_label_chars_indices
+        result_holder[f'code_adjacency_lists'] = adjacency_lists
+        result_holder[f'code_type_to_num_incoming_edges'] = num_incoming_edges_per_type
+        result_holder[f'code_unique_labels_as_characters'] = node_label_chars_unique
+        result_holder[f'code_node_labels_to_unique_labels'] = node_label_chars_indices
 
         return True
 
@@ -518,20 +476,28 @@ class GraphEncoder(Encoder):
         """
         # Graph structure:
         for i in range(self.num_edge_types):
-            batch_data['code_adjacency_lists'][i].append(sample['code_adjacency_lists'][i] + batch_data['code_node_offset'])
-        batch_data['code_type_to_num_incoming_edges'].append(sample['code_type_to_num_incoming_edges'])
+            batch_data['code_adjacency_lists'][i].append(
+                sample['code_adjacency_lists'][i] + batch_data['code_node_offset'])
+        batch_data['code_type_to_num_incoming_edges'].append(
+            sample['code_type_to_num_incoming_edges'])
 
         # Node labels:
-        batch_data['code_unique_labels_as_characters'].append(sample['code_unique_labels_as_characters'])
+        batch_data['code_unique_labels_as_characters'].append(
+            sample['code_unique_labels_as_characters'])
         batch_data['code_node_labels_to_unique_labels'].append(
             sample['code_node_labels_to_unique_labels'] + batch_data['code_unique_label_offset'])
         batch_data['code_unique_label_offset'] += sample['code_unique_labels_as_characters'].shape[0]
 
+        batch_data['code_graph_nodes_list'].append(np.full(shape=[len(sample['code_node_labels_to_unique_labels'])],
+                                                           fill_value=batch_data['code_num_graphs'],
+                                                           dtype=np.int32))
         # Finally, update the offset we use to shift things during batch construction:
         batch_data['code_num_graphs'] += 1
-        batch_data['code_node_offset'] += len(sample['code_node_labels_to_unique_labels'])
+        batch_data['code_node_offset'] += len(
+            sample['code_node_labels_to_unique_labels'])
 
-        if batch_data['code_node_offset'] >= self.get_hyper('max_nodes_in_batch'):
+        # if batch_data['code_node_offset'] >= self.get_hyper('max_nodes_in_batch'):
+        if batch_data['code_num_graphs'] == self.hyperparameters['batch_size']:
             return True
         return False
 
@@ -545,10 +511,13 @@ class GraphEncoder(Encoder):
         batch_data['code_num_graphs'] = 0
         batch_data['code_node_offset'] = 0
         batch_data['code_unique_label_offset'] = 0
-        batch_data['code_adjacency_lists'] = dict((_, []) for _ in range(self.num_edge_types))
+        batch_data['code_adjacency_lists'] = dict(
+            (_, []) for _ in range(self.num_edge_types))
         batch_data['code_type_to_num_incoming_edges'] = []
         batch_data['code_unique_labels_as_characters'] = []
         batch_data['code_node_labels_to_unique_labels'] = []
+        batch_data['code_graph_nodes_list'] = []
+        
 
     def minibatch_to_feed_dict(self, batch_data: Dict[str, Any], feed_dict: Dict[tf.Tensor, Any], is_train: bool) -> None:
         super().minibatch_to_feed_dict(batch_data, feed_dict, is_train)
@@ -561,6 +530,11 @@ class GraphEncoder(Encoder):
             else:
                 adjacency_lists[i] = np.zeros((0, 2), dtype=np.int32)
             num_edges += adjacency_lists[i].shape[0]
+        
+        write_to_feed_dict(
+            feed_dict, self.placeholders['num_graphs'],  batch_data['code_num_graphs'])
+        write_to_feed_dict(
+            feed_dict, self.placeholders['graph_nodes_list'],  np.concatenate(batch_data['code_graph_nodes_list']))
         write_to_feed_dict(
             feed_dict, self.placeholders['type_to_num_incoming_edges'],  np.concatenate(batch_data['code_type_to_num_incoming_edges'], axis=1))
         write_to_feed_dict(
