@@ -51,7 +51,7 @@
                 "--dryrun",
                 "--sequential",
                 "--model",
-                "ggnn2trans",
+                "gnn_edge_mlp2trans",
                 "/trained_models",
                 "../resources/data/python/final_graphs/jsonl/train",
                 "../resources/data/python/final_graphs/jsonl/valid",

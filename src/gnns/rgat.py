@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import tensorflow as tf
 from dpu_utils.tfutils import unsorted_segment_log_softmax
@@ -7,7 +7,7 @@ from utils import get_activation
 
 
 def sparse_rgat_layer(node_embeddings: tf.Tensor,
-                      adjacency_lists: List[tf.Tensor],
+                      adjacency_lists: Dict[int, tf.Tensor],
                       state_dim: Optional[int],
                       num_heads: int = 4,
                       num_timesteps: int = 1,
@@ -65,7 +65,7 @@ def sparse_rgat_layer(node_embeddings: tf.Tensor,
     edge_type_to_state_transformation_layers = []  # Layers to compute the message from a source state
     edge_type_to_attention_parameters = []  # Parameters for the attention mechanism
     edge_type_to_message_targets = []  # List of tensors of message targets
-    for edge_type_idx, adjacency_list_for_edge_type in enumerate(adjacency_lists):
+    for edge_type_idx, adjacency_list_for_edge_type in adjacency_lists.items():
         edge_type_to_state_transformation_layers.append(
             tf.keras.layers.Dense(units=state_dim,
                                   use_bias=False,
@@ -88,7 +88,7 @@ def sparse_rgat_layer(node_embeddings: tf.Tensor,
         # Note:
         #  We compute the state transformations (to make use of the wider, faster matrix multiplication),
         #  and then split into the individual attention heads via some reshapes:
-        for edge_type_idx, adjacency_list_for_edge_type in enumerate(adjacency_lists):
+        for edge_type_idx, adjacency_list_for_edge_type in adjacency_lists.items():
             edge_sources = adjacency_list_for_edge_type[:, 0]
             edge_targets = adjacency_list_for_edge_type[:, 1]
 

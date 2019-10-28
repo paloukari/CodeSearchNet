@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional, Type
 import tensorflow as tf
 from dpu_utils.utils import RichPath
 
-from models import Model, NeuralBoWModel, RNNModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel, GGNN2TransformerModel
+from models import Model, NeuralBoWModel, RNNModel, SelfAttentionModel, ConvolutionalModel, ConvSelfAttentionModel, GGNN2TransformerModel, GNN_EDGE_MLP2TransformerModel, GNN_FILM2TransformerModel, RGAT2TransformerModel, RGCN2TransformerModel, RGDCN2TransformerModel
 
 
 def get_model_class_from_name(model_name: str) -> Type[Model]:
@@ -18,8 +18,18 @@ def get_model_class_from_name(model_name: str) -> Type[Model]:
         return ConvolutionalModel
     elif model_name in {'convselfatt', 'convselfattentionmodel'}:
         return ConvSelfAttentionModel
-    elif model_name in {'ggnn2trans', 'convselfattentionmodel'}:
+    elif model_name in {'ggnn2trans', 'ggnn2transformermodel'}:
         return GGNN2TransformerModel
+    elif model_name in {'gnn_edge_mlp2trans', 'gnn_edge_mlp2transformermodel'}:
+        return GNN_EDGE_MLP2TransformerModel
+    elif model_name in {'gnn_film2trans', 'gnn_film2transformermodel'}:
+        return GNN_FILM2TransformerModel
+    elif model_name in {'rgat2trans', 'rgat2transformermodel'}:
+        return RGAT2TransformerModel
+    elif model_name in {'rgcn2trans', 'rgcn2transformermodel'}:
+        return RGCN2TransformerModel
+    elif model_name in {'rgdcn2trans', 'rgdcn2transformermodel'}:
+        return RGDCN2TransformerModel
     else:
         raise Exception("Unknown model '%s'!" % model_name)
 

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import tensorflow as tf
 
@@ -6,7 +6,7 @@ from utils import get_activation, get_aggregation_function, SMALL_NUMBER
 
 
 def sparse_rgdcn_layer(node_embeddings: tf.Tensor,
-                       adjacency_lists: List[tf.Tensor],
+                       adjacency_lists: Dict[int, tf.Tensor],
                        type_to_num_incoming_edges: tf.Tensor,
                        num_channels: int = 8,
                        channel_dim: int = 16,
@@ -91,7 +91,7 @@ def sparse_rgdcn_layer(node_embeddings: tf.Tensor,
     edge_type_to_channel_to_weight_computation_layers = []  # Layers to compute the dynamic computation weights
     edge_type_to_message_targets = []  # List of tensors of message targets
 
-    for edge_type_idx, adjacency_list_for_edge_type in enumerate(adjacency_lists):
+    for edge_type_idx, adjacency_list_for_edge_type in adjacency_lists.items():
         channel_to_weight_computation_layers = []
         for channel in range(num_channels):
             if channel == 0 or not(tie_channel_weights):
@@ -123,7 +123,7 @@ def sparse_rgdcn_layer(node_embeddings: tf.Tensor,
             cur_channel_message_per_type = []  # list of tensors of messages of shape [E, K]
 
             # Collect incoming messages per edge type
-            for edge_type_idx, adjacency_list_for_edge_type in enumerate(adjacency_lists):
+            for edge_type_idx, adjacency_list_for_edge_type in adjacency_lists.items():
                 edge_sources = adjacency_list_for_edge_type[:, 0]
                 edge_targets = adjacency_list_for_edge_type[:, 1]
                 edge_source_states = \

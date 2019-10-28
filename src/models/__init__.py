@@ -6,3 +6,8 @@ from .conv_model import ConvolutionalModel
 from .conv_self_att_model import ConvSelfAttentionModel
 from .graph_model import GraphModel
 from .ggnn2transformer_model import GGNN2TransformerModel
+from .gnn_edge_mlp2transformer_model import GNN_EDGE_MLP2TransformerModel
+from .gnn_film2transformer_model import GNN_FILM2TransformerModel
+from .rgat2transformer_model import RGAT2TransformerModel
+from .rgcn2transformer_model import RGCN2TransformerModel
+from .rgdcn2transformer_model import RGDCN2TransformerModel

@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 import tensorflow as tf
 
 
@@ -26,7 +26,7 @@ class EdgeMLP():
 
 def sparse_gnn_edge_mlp_layer(
         node_embeddings: tf.Tensor,
-        adjacency_lists: List[tf.Tensor],
+        adjacency_lists: Dict[int, tf.Tensor],
         type_to_num_incoming_edges: tf.Tensor,
         state_dim: Optional[int],
         num_timesteps: int = 1,
@@ -89,7 +89,7 @@ def sparse_gnn_edge_mlp_layer(
     message_aggregation_fn = get_aggregation_function(message_aggregation_function)
     edge_type_to_edge_mlp = []  # MLPs to compute the edge messages
     edge_type_to_message_targets = []  # List of tensors of message targets
-    for edge_type_idx, adjacency_list_for_edge_type in enumerate(adjacency_lists):
+    for edge_type_idx, adjacency_list_for_edge_type in adjacency_lists.items():
         with tf.variable_scope("Edge_%i_MLP" % edge_type_idx):
             edge_type_to_edge_mlp.append(
                 EdgeMLP(out_size=state_dim, num_hidden_layers=num_edge_hidden_layers))
@@ -102,7 +102,7 @@ def sparse_gnn_edge_mlp_layer(
     for _ in range(num_timesteps):
         messages_per_type = []  # list of tensors of messages of shape [E, D]
         # Collect incoming messages per edge type
-        for edge_type_idx, adjacency_list_for_edge_type in enumerate(adjacency_lists):
+        for edge_type_idx, adjacency_list_for_edge_type in adjacency_lists.items():
             edge_sources = adjacency_list_for_edge_type[:, 0]
             edge_targets = adjacency_list_for_edge_type[:, 1]
             edge_source_states = \
