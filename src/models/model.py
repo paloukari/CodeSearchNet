@@ -927,6 +927,7 @@ class Model(ABC):
             return self.__query_encoder_type.load_data_from_sample(
                 "query",
                 self.hyperparameters,
+                sample_to_parse,
                 self.__query_metadata,
                 [d.lower() for d in sample_to_parse['docstring_tokens']],
                 function_name,

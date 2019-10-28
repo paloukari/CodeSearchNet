@@ -43,6 +43,6 @@ class RGAT_Encoder(GraphEncoder):
             adjacency_lists=adjacency_lists,
             state_dim=self.hyperparameters['code_hidden_size'],
             num_timesteps=num_timesteps,
-            num_heads=self.params['code_num_heads'],
+            num_heads=self.hyperparameters['code_num_heads'],
             activation_function=self.hyperparameters['code_graph_activation_function'],
         )
