@@ -8,7 +8,9 @@ class GraphModel(Model):
     @classmethod
     def get_default_hyperparameters(cls) -> Dict[str, Any]:
         hypers = {}
-        model_hypers = {}
+        model_hypers = {
+            
+        }
         hypers.update(super().get_default_hyperparameters())
         hypers.update(model_hypers)
         return hypers

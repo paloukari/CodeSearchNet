@@ -33,7 +33,8 @@ from typing import List, Dict, Any, Iterable, Tuple, Optional, Union, Callable, 
 import numpy as np
 
 from ast import parse
-from ast_graph_generator import AstGraphGenerator
+from ast_graph_generator import AstGraphGenerator, NODE_TYPE
+
 
 def jsonl_to_df(input_folder: RichPath) -> pd.DataFrame:
     "Concatenates all jsonl files from path and returns them as a single pandas.DataFrame ."
@@ -44,40 +45,68 @@ def jsonl_to_df(input_folder: RichPath) -> pd.DataFrame:
     assert files, 'There were no jsonl.gz files in the specified directory.'
     print(f'reading files from {input_folder.path}')
     for f in tqdm(files, total=len(files)):
-        dfs.append(pd.DataFrame(list(f.read_as_jsonl(error_handling=lambda m,e: print(f'Error while loading {m} : {e}')))))
+        dfs.append(pd.DataFrame(list(f.read_as_jsonl(
+            error_handling=lambda m, e: print(f'Error while loading {m} : {e}')))))
     return pd.concat(dfs), len(files)
 
 
 def generate_graph_column(df: pd.DataFrame) -> pd.DataFrame:
     assert 'code_tokens' in df.columns.values, 'Data must contain field code_tokens'
     assert 'language' in df.columns.values, 'Data must contain field language'
+
+    def next_terminal(node, non_terminal):
+        if node in non_terminal:
+            return next_terminal(node+1, non_terminal)
+        return node
     
+    def fix_index(node, non_terminal):
+        node = next_terminal(node, non_terminal)
+        return node - len([_ for _ in non_terminal if _ < node])
+
     def generate_graph(code):
         try:
             visitor = AstGraphGenerator()
             visitor.visit(parse(code))
+
+            # we'll keep the the first node and rename it to root
+            visitor.node_label[0] = 'root'
+            # the non-terminal nodes
+            n_t = [index for (index, _) in sorted(visitor.node_label.items(
+            )) if visitor.node_type[index] == NODE_TYPE['non_terminal'] and index > 0]
+            n_t.sort()
+
             E = [(t, origin, destination)
-                                    for (origin, destination), edges
-                                    in visitor.graph.items() for t in edges]
-            V = [label.strip() for (_, label) in sorted(visitor.node_label.items())]
+                    for (origin, destination), edges
+                    in visitor.graph.items() for t in edges]
+            
+            # we'll replace the non terminal nodes and edges with the first terminal child
+            E = [(e[0], fix_index(e[1], n_t), fix_index(e[2], n_t))
+                    for e in E]
+            # remove self references
+            E = [e for e in E if e[1] != e[2]]
+
+            V = [label.strip() for (index, label) in sorted(
+                visitor.node_label.items()) if index not in n_t]
             return V, E
         except Exception as ex:
-            #print(ex)
-            return None,None
-    
+            # print(ex)
+            return None, None
+
     tqdm.pandas()
-    df['graph_V'], df['graph_E'] = zip(*df['original_string'].progress_map(generate_graph))
+    df['graph_V'], df['graph_E'] = zip(
+        *df['original_string'].progress_map(generate_graph))
     #df['graph'] = df.apply(lambda x: generate_graph(visitor, x['original_string']), axis=1)
     return df
+
 
 def run(args):
 
     azure_info_path = args.get('--azure-info', None)
     input_path = RichPath.create(args['INPUT_FILENAME'], azure_info_path)
     output_folder = args['OUTPUT_FOLDER']
-    
+
     os.makedirs(output_folder, exist_ok=True)
-    
+
     # get data and process it
     df, files = jsonl_to_df(input_path)
     print('Generating graphs ... this may take some time.')
@@ -86,11 +115,12 @@ def run(args):
     df.dropna(subset=['graph_V', 'graph_E'], inplace=True)
     print(f"dropped {original_size - df.shape[0]} records")
     # save dataframes as chunked jsonl files
-    
-    
+
     print(f'Saving data to {str(output_folder)}')
-    
-    chunked_save_df_to_jsonl(df, RichPath.create(args['OUTPUT_FOLDER'], azure_info_path), files, False)
+
+    chunked_save_df_to_jsonl(df, RichPath.create(
+        args['OUTPUT_FOLDER'], azure_info_path), files, False)
+
 
 if __name__ == '__main__':
     args = docopt(__doc__)

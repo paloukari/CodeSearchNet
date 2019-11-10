@@ -47,7 +47,7 @@ def parse_data_file(hyperparameters: Dict[str, Any],
                     is_test: bool,
                     data_file: RichPath) -> Dict[str, List[Tuple[bool, Dict[str, Any]]]]:
     results: DefaultDict[str, List] = defaultdict(list)
-    #counter = 200
+    counter = 0#201
     for raw_sample in data_file.read_by_file_suffix():
         sample: Dict = {}
         language = raw_sample['language']
@@ -77,9 +77,9 @@ def parse_data_file(hyperparameters: Dict[str, Any],
         use_example = use_code_flag and use_query_flag
         results[language].append((use_example, sample))
         # TODO:  remove this
-        #counter -=1
-        #if counter < 0:
-        #    break
+        counter -=1
+        if counter == 0:
+            break
     return results
 
 
@@ -409,7 +409,7 @@ class Model(ABC):
         def metadata_parser_fn(_, file_path: RichPath) -> Iterable[Tuple[Dict[str, Any], Dict[str, Dict[str, Any]]]]:
             raw_query_metadata = self.__query_encoder_type.init_metadata()
             per_code_language_metadata: DefaultDict[str, Dict[str, Any]] = defaultdict(self.__code_encoder_type.init_metadata)
-            #counter = 200
+            counter = 0#201
             for raw_sample in file_path.read_by_file_suffix():
                 sample_language = raw_sample['language']
                 self.__code_encoder_type.load_metadata_from_sample(raw_sample,
@@ -421,9 +421,9 @@ class Model(ABC):
                                                                     raw_query_metadata)
                                                                     # TODO: remove this
 
-                #counter -=1
-                #if counter < 0:
-                #    break
+                counter -=1
+                if counter == 0:
+                    break
 
 
             yield (raw_query_metadata, per_code_language_metadata)

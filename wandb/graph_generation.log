@@ -1,0 +1,36 @@
+reading files from ../resources/data/python/final/jsonl/valid
+100%|###################################################################################| 1/1 [00:02<00:00,  2.30s/it]
+Generating graphs ... this may take some time.
+100%|###########################################################################| 23107/23107 [08:35<00:00, 44.79it/s]
+dropped 316 records
+Saving data to ../resources/data/python/final_graphs2/jsonl/valid
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/valid/codedata_00000.jsonl.gz
+root@25285b303801:/home/dev/src# python3 /home/dev/src/graph_generator.py ../resources/data/python/final/jsonl/train ../resources/data/python/final_graphs2/jsonl/train
+reading files from ../resources/data/python/final/jsonl/train
+100%|#################################################################################| 14/14 [00:49<00:00,  3.56s/it]
+Generating graphs ... this may take some time.
+100%|#######################################################################| 412178/412178 [2:07:12<00:00, 54.00it/s]
+dropped 4703 records
+Saving data to ../resources/data/python/final_graphs2/jsonl/train
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00000.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00001.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00002.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00003.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00004.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00005.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00006.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00007.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00008.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00009.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00010.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00011.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00012.jsonl.gz
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/train/codedata_00013.jsonl.gz
+root@25285b303801:/home/dev/src# python3 /home/dev/src/graph_generator.py ../resources/data/python/final/jsonl/test ../resources/data/python/final_graphs2/jsonl/test 
+reading files from ../resources/data/python/final/jsonl/test
+100%|###################################################################################| 1/1 [00:02<00:00,  2.16s/it]
+Generating graphs ... this may take some time.
+100%|###########################################################################| 22176/22176 [05:13<00:00, 70.70it/s]
+dropped 279 records
+Saving data to ../resources/data/python/final_graphs2/jsonl/test
+Wrote chunk to ../resources/data/python/final_graphs2/jsonl/test/codedata_00000.jsonl.gz

@@ -27,9 +27,9 @@
                 "--model",
                 "convselfatt",
                 "/trained_models",
-                "../resources/data/python/final_graphs/jsonl/train",
-                "../resources/data/python/final_graphs/jsonl/valid",
-                "../resources/data/python/final_graphs/jsonl/test"
+                "../resources/data/python/final_graphs2/jsonl/train",
+                "../resources/data/python/final_graphs2/jsonl/valid",
+                "../resources/data/python/final_graphs2/jsonl/test"
                 // "../resources/data/python/final/jsonl/train",
                 // "../resources/data/python/final/jsonl/valid",
                 // "../resources/data/python/final/jsonl/test"
@@ -51,11 +51,11 @@
                 "--dryrun",
                 "--sequential",
                 "--model",
-                "gnn_edge_mlp2trans",
+                "rgat2trans",
                 "/trained_models",
-                "../resources/data/python/final_graphs/jsonl/train",
-                "../resources/data/python/final_graphs/jsonl/valid",
-                "../resources/data/python/final_graphs/jsonl/test"
+                "../resources/data/python/final_graphs2/jsonl/train",
+                "../resources/data/python/final_graphs2/jsonl/valid",
+                "../resources/data/python/final_graphs2/jsonl/test"
                 // "../resources/data/python/final/jsonl/train",
                 // "../resources/data/python/final/jsonl/valid",
                 // "../resources/data/python/final/jsonl/test"
@@ -70,7 +70,7 @@
             "program": "${workspaceFolder}/src/graph_generator.py",
             "args": [
                 "/home/dev/resources/data/python/final/jsonl/train",
-                "/home/dev/resources/data/python/final_graphs/jsonl/train"
+                "/home/dev/resources/data/python/final_graphs2/jsonl/train"
             ],
             "cwd": "${workspaceFolder}/src",
             "console": "integratedTerminal"

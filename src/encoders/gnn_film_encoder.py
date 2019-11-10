@@ -4,7 +4,6 @@ from typing import Dict, Any, List, Iterable, Optional, Tuple
 import random
 import re
 
-from utils.bpevocabulary import BpeVocabulary
 from utils.tfutils import convert_and_pad_token_sequence
 
 import tensorflow as tf
