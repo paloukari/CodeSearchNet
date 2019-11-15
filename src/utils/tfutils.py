@@ -9,7 +9,24 @@ from dpu_utils.mlutils import Vocabulary
 from utils.bpevocabulary import BpeVocabulary
 
 BIG_NUMBER = 1e7
+SMALL_NUMBER = 1e-7
 
+def unsorted_segment_softmax(logits, segment_ids, num_segments):
+    """Perform a safe unsorted segment softmax."""
+    max_per_segment = tf.unsorted_segment_max(data=logits,
+                                            segment_ids=segment_ids,
+                                            num_segments=num_segments)
+    scattered_maxes = tf.gather(params=max_per_segment,
+                                indices=segment_ids)
+    recentered_scores = logits - scattered_maxes
+    exped_recentered_scores = tf.exp(recentered_scores)
+
+    per_segment_sums = tf.unsorted_segment_sum(
+        exped_recentered_scores, segment_ids, num_segments)
+
+    probs = exped_recentered_scores / \
+        (tf.gather(params=per_segment_sums, indices=segment_ids) + SMALL_NUMBER)
+    return probs
 
 def convert_and_pad_token_sequence(token_vocab: Union[Vocabulary, BpeVocabulary],
                                    token_sequence: List[str],
