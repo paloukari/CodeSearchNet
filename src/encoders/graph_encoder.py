@@ -35,8 +35,7 @@ __PROGRAM_GRAPH_EDGES_TYPES_WITH_BKWD = \
 PROGRAM_GRAPH_EDGES_TYPES_VOCAB = {edge_type_name: idx
                                    for idx, edge_type_name in enumerate(__PROGRAM_GRAPH_EDGES_TYPES_WITH_BKWD)}
 
-USE_BPE = True
-USE_ATTENTION = True
+
 
 class GraphEncoder(Encoder):
 
@@ -92,7 +91,11 @@ class GraphEncoder(Encoder):
             'max-margin_loss_margin': 0.2,
             'out_layer_dropout_rate': 0.2,
             'add_self_loop_edges': False,
-            'attention_depth': 1
+            'attention_depth': 1, 
+            
+            'use_graph_attention': False,
+            'use_graph_attention_proper': False,
+            'use_graph_bpe': True
 
         }
         hypers = super().get_default_hyperparameters()
@@ -152,7 +155,7 @@ class GraphEncoder(Encoder):
             tf.placeholder(dtype=tf.int32, shape=[
                            None], name='graph_nodes_list')
 
-        if not USE_ATTENTION:
+        if not self.get_hyper('use_graph_attention'):
             per_graph_outputs = tf.unsorted_segment_max(data=graph_outout,
                                                         segment_ids=self.placeholders['graph_nodes_list'],
                                                         num_segments=self.placeholders['num_graphs'])
@@ -174,26 +177,25 @@ class GraphEncoder(Encoder):
                                     name="attention_scores")  # [N, 1]
             
             attention_scores = _model
+            if not self.get_hyper('use_graph_attention_proper'): 
+                # attention simple
+                graph_input_weighted  = graph_input * attention_scores
+                per_graph_outputs = tf.unsorted_segment_sum(graph_input_weighted,
+                                                        segment_ids=self.placeholders['graph_nodes_list'],
+                                                        num_segments=self.placeholders['num_graphs'])
+                                                        # [G]
+            else:
+                # attention proper
+                attention_scores = unsorted_segment_softmax(attention_scores,
+                                                        segment_ids=self.placeholders['graph_nodes_list'],
+                                                        num_segments=self.placeholders['num_graphs'])
 
-            # attention simple
-            graph_input_weighted  = graph_input * attention_scores
-            per_graph_outputs = tf.unsorted_segment_sum(graph_input_weighted,
-                                                       segment_ids=self.placeholders['graph_nodes_list'],
-                                                       num_segments=self.placeholders['num_graphs'])
-                                                       # [G]
-            
-            # attention proper
-            # attention_scores = unsorted_segment_softmax(attention_scores,
-            #                                         segment_ids=self.placeholders['graph_nodes_list'],
-            #                                         num_segments=self.placeholders['num_graphs'])
+                graph_outout_weighted  = graph_outout * attention_scores
 
-            # graph_input_weighted  = graph_input * attention_scores
-
-            # per_graph_outputs = tf.unsorted_segment_mean(graph_input_weighted,
-            #                                         segment_ids=self.placeholders['graph_nodes_list'],
-            #                                         num_segments=self.placeholders['num_graphs'])
-            #                                         # [G]
-            
+                per_graph_outputs = tf.unsorted_segment_mean(graph_outout_weighted,
+                                                        segment_ids=self.placeholders['graph_nodes_list'],
+                                                        num_segments=self.placeholders['num_graphs'])
+                                                        # [G]
             return per_graph_outputs
 
     def __build_graph_propagation_model(self, model: tf.Tensor) -> tf.Tensor:
@@ -426,7 +428,7 @@ class GraphEncoder(Encoder):
         return tf.nn.embedding_lookup(params=token_embeddings, ids=token_inp)
 
     def __make_input_model(self) -> None:
-        if not USE_BPE:
+        if not self.get_hyper('use_graph_bpe'):
             node_label_char_length = self.get_hyper(
                 'graph_node_label_max_num_chars')
             self.placeholders['unique_labels_as_characters'] = \
@@ -458,7 +460,7 @@ class GraphEncoder(Encoder):
             tf.placeholder(dtype=tf.float32, shape=[
                            self.num_edge_types, None], name='type_to_num_incoming_edges')
 
-        if not USE_BPE:
+        if not self.get_hyper('use_graph_bpe'):
             self.placeholders['initial_node_features'] = \
                 self.__get_node_label_charcnn_embeddings(self.placeholders['unique_labels_as_characters'],
                                                          self.placeholders['node_labels_to_unique_labels'])
@@ -617,7 +619,7 @@ class GraphEncoder(Encoder):
             encoder_label, hyperparameters, metadata, raw_sample)
         num_nodes = len(raw_sample['graph_V'])
 
-        if not USE_BPE:
+        if not hyperparameters[f'{encoder_label}_use_graph_bpe']:
             graph_node_label_max_num_chars = hyperparameters[
                 f'{encoder_label}_graph_node_label_max_num_chars']
 
@@ -723,7 +725,7 @@ class GraphEncoder(Encoder):
         # It's always encoder_label == 'code'
         result_holder[f'code_adjacency_lists'] = adjacency_lists
         result_holder[f'code_type_to_num_incoming_edges'] = num_incoming_edges_per_type
-        if not USE_BPE:
+        if not hyperparameters[f'{encoder_label}_use_graph_bpe']:
             result_holder[f'code_unique_labels_as_characters'] = node_label_chars_unique
             result_holder[f'code_node_labels_to_unique_labels'] = node_label_chars_indices
         else:
@@ -746,7 +748,7 @@ class GraphEncoder(Encoder):
             sample['code_type_to_num_incoming_edges'])
 
         # Node labels:
-        if not USE_BPE:
+        if not self.get_hyper('use_graph_bpe'):
             batch_data['code_unique_labels_as_characters'].append(
                 sample['code_unique_labels_as_characters'])
             batch_data['code_node_labels_to_unique_labels'].append(
@@ -801,7 +803,7 @@ class GraphEncoder(Encoder):
         super().init_minibatch(batch_data)
         batch_data['code_num_graphs'] = 0
         batch_data['code_node_offset'] = 0
-        if not USE_BPE:
+        if not self.get_hyper('use_graph_bpe'):
             batch_data['code_unique_label_offset'] = 0
             batch_data['code_unique_labels_as_characters'] = []
             batch_data['code_node_labels_to_unique_labels'] = []
@@ -825,6 +827,10 @@ class GraphEncoder(Encoder):
         feed_dict[self.placeholders['graph_layer_input_dropout_keep_prob']] = self.get_hyper(
             'graph_layer_input_dropout_keep_prob') if is_train else 1.0
 
+        # during testing, this is called with empty dataset
+        if batch_data['code_num_graphs'] == 0:
+            return
+
         adjacency_lists = batch_data['code_adjacency_lists']
         num_edges = 0
         for i in range(self.num_edge_types):
@@ -834,6 +840,7 @@ class GraphEncoder(Encoder):
                 adjacency_lists[i] = np.zeros((0, 2), dtype=np.int32)
             num_edges += adjacency_lists[i].shape[0]
 
+        
         write_to_feed_dict(
             feed_dict, self.placeholders['num_graphs'],  batch_data['code_num_graphs'])
         write_to_feed_dict(
@@ -843,7 +850,7 @@ class GraphEncoder(Encoder):
         write_to_feed_dict(
             feed_dict, self.placeholders['adjacency_lists'], adjacency_lists)
 
-        if not USE_BPE:
+        if not self.get_hyper('use_graph_bpe'):
             write_to_feed_dict(
                 feed_dict, self.placeholders['unique_labels_as_characters'],  np.concatenate(batch_data['code_unique_labels_as_characters'], axis=0))
             write_to_feed_dict(

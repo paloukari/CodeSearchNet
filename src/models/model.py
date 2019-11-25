@@ -47,7 +47,7 @@ def parse_data_file(hyperparameters: Dict[str, Any],
                     is_test: bool,
                     data_file: RichPath) -> Dict[str, List[Tuple[bool, Dict[str, Any]]]]:
     results: DefaultDict[str, List] = defaultdict(list)
-    counter = 0#601
+    counter = 0#201
     for raw_sample in data_file.read_by_file_suffix():
         sample: Dict = {}
         language = raw_sample['language']
@@ -409,7 +409,7 @@ class Model(ABC):
         def metadata_parser_fn(_, file_path: RichPath) -> Iterable[Tuple[Dict[str, Any], Dict[str, Dict[str, Any]]]]:
             raw_query_metadata = self.__query_encoder_type.init_metadata()
             per_code_language_metadata: DefaultDict[str, Dict[str, Any]] = defaultdict(self.__code_encoder_type.init_metadata)
-            counter = 0#601
+            counter = 0#201
             for raw_sample in file_path.read_by_file_suffix():
                 sample_language = raw_sample['language']
                 self.__code_encoder_type.load_metadata_from_sample(raw_sample,
@@ -725,8 +725,8 @@ class Model(ABC):
             Triple of epoch loss (average over samples), MRR (average over batches), total time used for epoch (in s)
         """
         """Run the training ops and return the loss and the MRR."""
-        epoch_loss, loss = 0.0, 0.0
-        mrr_sum, mrr = 0.0, 0.0
+        epoch_loss, mb_loss, loss = 0.0, 0.0, 0.0
+        mrr_sum, mb_mrr, mrr = 0.0, 0.0, 0.0
         epoch_start = time.time()
         # TODO: , compute_language_weightings=True
         data_generator = self.__split_data_into_minibatches(data, is_train=is_train)
@@ -734,9 +734,9 @@ class Model(ABC):
         printed_one_line = False
         for minibatch_counter, (batch_data_dict, samples_in_batch, samples_used_so_far, _) in enumerate(data_generator):
             if not quiet or (minibatch_counter % 100) == 99:
-                print("%s: Batch %5i (has %i samples). Processed %i samples. Loss so far: %.4f.  MRR so far: %.4f "
+                print("%s: Batch %5i (has %i). Processed %i. mB Loss: %.4f MRR %.4f. Loss so far: %.4f.  MRR so far: %.4f "
                       % (epoch_name, minibatch_counter, samples_in_batch,
-                         samples_used_so_far - samples_in_batch, loss, mrr),
+                         samples_used_so_far - samples_in_batch, mb_loss, mb_mrr, loss, mrr),
                       flush=True,
                       end="\r" if not quiet else '\n')
                 printed_one_lcode_query_cooccurrence_logitsine = True
@@ -748,6 +748,9 @@ class Model(ABC):
 
             epoch_loss += op_results['loss'] * samples_in_batch
             mrr_sum += np.sum(op_results['mrr'])
+            
+            mb_mrr = np.sum(op_results['mrr'])/samples_in_batch
+            mb_loss = op_results['loss']
 
             loss = epoch_loss / max(1, samples_used_so_far)
             mrr = mrr_sum / max(1, samples_used_so_far)

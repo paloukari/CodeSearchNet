@@ -64,6 +64,32 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Python: Debug convselfatt",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/train.py",
+            "args": [
+                // "--testrun",
+                "--max-num-epochs",
+                "5",
+                "--max-files-per-dir",
+                "1",
+                "--dryrun",
+                "--sequential",
+                "--model",
+                "convselfatt",
+                "/trained_models",
+                "../resources/data/python/final_graphs2/jsonl/train",
+                "../resources/data/python/final_graphs2/jsonl/valid",
+                "../resources/data/python/final_graphs2/jsonl/test"
+                // "../resources/data/python/final/jsonl/train",
+                // "../resources/data/python/final/jsonl/valid",
+                // "../resources/data/python/final/jsonl/test"
+            ],
+            "cwd": "${workspaceFolder}/src",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: Generate graphs",
             "type": "python",
             "request": "launch",
