@@ -93,7 +93,7 @@ class GraphEncoder(Encoder):
             'add_self_loop_edges': False,
             'attention_depth': 1, 
             
-            'use_graph_attention': False,
+            'use_graph_attention': True,
             'use_graph_attention_proper': False,
             'use_graph_bpe': True
 
@@ -142,7 +142,7 @@ class GraphEncoder(Encoder):
             model = self.__make_final_layer(model, model_input)
             return model
 
-    def __make_final_layer(self, graph_outout: tf.Tensor, graph_input: tf.Tensor) -> tf.Tensor:
+    def __make_final_layer(self, graph_output: tf.Tensor, graph_input: tf.Tensor) -> tf.Tensor:
         """
         Creates the final embedding layer, using the graph nodes and the original nodes
         graph_input: the unprocessed input of the graph (original node features)
@@ -156,7 +156,7 @@ class GraphEncoder(Encoder):
                            None], name='graph_nodes_list')
 
         if not self.get_hyper('use_graph_attention'):
-            per_graph_outputs = tf.unsorted_segment_max(data=graph_outout,
+            per_graph_outputs = tf.unsorted_segment_max(data=graph_output,
                                                         segment_ids=self.placeholders['graph_nodes_list'],
                                                         num_segments=self.placeholders['num_graphs'])
             per_graph_outputs = tf.squeeze(per_graph_outputs)  # [G]
@@ -166,7 +166,7 @@ class GraphEncoder(Encoder):
             attention_depth = self.get_hyper('attention_depth')
             label_embedding_size = self.get_hyper('token_embedding_size')  # D
 
-            _model = graph_outout
+            _model = graph_output
             for _ in range(attention_depth - 1):
                 _model = tf.layers.dense(
                     _model, units=label_embedding_size)  # [N, D]
@@ -179,8 +179,8 @@ class GraphEncoder(Encoder):
             attention_scores = _model
             if not self.get_hyper('use_graph_attention_proper'): 
                 # attention simple
-                graph_input_weighted  = graph_input * attention_scores
-                per_graph_outputs = tf.unsorted_segment_sum(graph_input_weighted,
+                graph_output_weighted  = graph_output * attention_scores
+                per_graph_outputs = tf.unsorted_segment_max(graph_output_weighted,
                                                         segment_ids=self.placeholders['graph_nodes_list'],
                                                         num_segments=self.placeholders['num_graphs'])
                                                         # [G]
@@ -190,9 +190,9 @@ class GraphEncoder(Encoder):
                                                         segment_ids=self.placeholders['graph_nodes_list'],
                                                         num_segments=self.placeholders['num_graphs'])
 
-                graph_outout_weighted  = graph_outout * attention_scores
+                graph_output_weighted  = graph_output * attention_scores
 
-                per_graph_outputs = tf.unsorted_segment_mean(graph_outout_weighted,
+                per_graph_outputs = tf.unsorted_segment_mean(graph_output_weighted,
                                                         segment_ids=self.placeholders['graph_nodes_list'],
                                                         num_segments=self.placeholders['num_graphs'])
                                                         # [G]
@@ -604,6 +604,10 @@ class GraphEncoder(Encoder):
         function-name as the query, and replacing the function name in the code with an out-of-vocab token.
         Sub-tokenizes, converts, and pads both versions, and rejects empty samples.
         """
+
+        # TODO: move this to init
+        if not cls.unsplittable_keywords:
+            cls.unsplittable_keywords = get_language_keywords('python')
         # Save the two versions of the code and query:
         data_holder = {QueryType.DOCSTRING.value: data_to_load,
                        QueryType.FUNCTION_NAME.value: None}

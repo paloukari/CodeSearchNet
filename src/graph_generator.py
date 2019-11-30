@@ -12,6 +12,7 @@ Arguments:
 Options:
     -h --help                    Show this screen.
     --debug                      Enable debug routines. [default: False]
+    --pickle                     The input and output are pickle files. [default: False]
 
 Example:
 
@@ -22,6 +23,7 @@ Example:
 
 """
 
+import pickle
 from docopt import docopt
 import hashlib
 import pandas as pd
@@ -35,6 +37,7 @@ import numpy as np
 from ast import parse
 from ast_graph_generator import AstGraphGenerator, NODE_TYPE
 
+from multiprocessing import cpu_count
 
 def jsonl_to_df(input_folder: RichPath) -> pd.DataFrame:
     "Concatenates all jsonl files from path and returns them as a single pandas.DataFrame ."
@@ -50,9 +53,11 @@ def jsonl_to_df(input_folder: RichPath) -> pd.DataFrame:
     return pd.concat(dfs), len(files)
 
 
-def generate_graph_column(df: pd.DataFrame) -> pd.DataFrame:
-    assert 'code_tokens' in df.columns.values, 'Data must contain field code_tokens'
-    assert 'language' in df.columns.values, 'Data must contain field language'
+def generate_graph_column(df: pd.DataFrame, is_pickle: bool) -> pd.DataFrame:
+    
+    if not is_pickle:
+        assert 'code_tokens' in df.columns.values, 'Data must contain field code_tokens'
+        assert 'language' in df.columns.values, 'Data must contain field language'
 
     def next_terminal(node, non_terminal):
         if node in non_terminal:
@@ -65,6 +70,8 @@ def generate_graph_column(df: pd.DataFrame) -> pd.DataFrame:
 
     def generate_graph(code):
         try:
+            if code.startswith('def get_taxon_to_species_dict():'):
+                return None, None
             visitor = AstGraphGenerator()
             visitor.visit(parse(code))
 
@@ -93,33 +100,76 @@ def generate_graph_column(df: pd.DataFrame) -> pd.DataFrame:
             return None, None
 
     tqdm.pandas()
-    df['graph_V'], df['graph_E'] = zip(
-        *df['original_string'].progress_map(generate_graph))
-    #df['graph'] = df.apply(lambda x: generate_graph(visitor, x['original_string']), axis=1)
+    if not is_pickle:
+        df['graph_V'], df['graph_E'] = zip(
+            *df['original_string'].progress_map(generate_graph))
+    else:
+        df['graph_V'], df['graph_E'] = zip(
+            *df['function'].progress_map(generate_graph))
     return df
 
 
 def run(args):
+    from_pickle = args.get('--pickle', False)
+    
+    if not from_pickle:
+        azure_info_path = args.get('--azure-info', None)
+        
+        input_path = RichPath.create(args['INPUT_FILENAME'], azure_info_path)
+        output_folder = args['OUTPUT_FOLDER']
 
-    azure_info_path = args.get('--azure-info', None)
-    input_path = RichPath.create(args['INPUT_FILENAME'], azure_info_path)
-    output_folder = args['OUTPUT_FOLDER']
+        os.makedirs(output_folder, exist_ok=True)
 
-    os.makedirs(output_folder, exist_ok=True)
+        # get data and process it
+        df, files = jsonl_to_df(input_path)
+        print('Generating graphs ... this may take some time.')
+        df = generate_graph_column(df, False)
+        original_size = df.shape[0]
+        df.dropna(subset=['graph_V', 'graph_E'], inplace=True)
+        print(f"dropped {original_size - df.shape[0]} records")
+        # save dataframes as chunked jsonl files
 
-    # get data and process it
-    df, files = jsonl_to_df(input_path)
-    print('Generating graphs ... this may take some time.')
-    df = generate_graph_column(df)
-    original_size = df.shape[0]
-    df.dropna(subset=['graph_V', 'graph_E'], inplace=True)
-    print(f"dropped {original_size - df.shape[0]} records")
-    # save dataframes as chunked jsonl files
+        print(f'Saving data to {str(output_folder)}')
 
-    print(f'Saving data to {str(output_folder)}')
+        chunked_save_df_to_jsonl(df, RichPath.create(
+            args['OUTPUT_FOLDER'], azure_info_path), files, False)
+    
+    else:
+        input_path = args['INPUT_FILENAME']
+        output_path = args['OUTPUT_FOLDER']
 
-    chunked_save_df_to_jsonl(df, RichPath.create(
-        args['OUTPUT_FOLDER'], azure_info_path), files, False)
+        definitions = pickle.load(open(input_path, 'rb'))
+        number_of_splits = 8*cpu_count()
+        definition_splits = np.array_split(definitions, number_of_splits)
+
+        print('Generating graphs ... this may take some time.')
+
+        for i, definition_split in enumerate(definition_splits):
+            output_split_path = f'{output_path}_{i}'
+            if os.path.exists(output_split_path):
+                print(f'Skipping {output_split_path}..')
+                continue
+
+            df = pd.DataFrame(list(definition_split))
+            original_size = df.shape[0]
+            
+            df = generate_graph_column(df, True)
+            #df.dropna(subset=['graph_V', 'graph_E'], inplace=True)
+            
+            #print(f"Failed to create graphs for {original_size - df.shape[0]} records")
+            definitions = df.to_dict('records')
+
+            print(f'Saving data to {output_split_path}')
+            with open(output_split_path, 'wb') as f:
+                pickle.dump(definitions, f)
+        
+        definitions = []
+        for i in range(number_of_splits):
+            output_split_path = f'{output_path}_{i}'
+            definitions = definitions + pickle.load(open(output_split_path, 'rb'))
+        with open(output_path, 'wb') as f:
+            pickle.dump(definitions, f)
+
 
 
 if __name__ == '__main__':

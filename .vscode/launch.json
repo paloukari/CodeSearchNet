@@ -100,6 +100,31 @@
             ],
             "cwd": "${workspaceFolder}/src",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Generate evaluation graphs",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/graph_generator.py",
+            "args": [
+                "--pickle",
+                "/home/dev/resources/data/python_dedupe_definitions_v2.pkl",
+                "/home/dev/resources/data/python_dedupe_definitions_v2_graphs.pkl"
+            ],
+            "cwd": "${workspaceFolder}/src",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Predict",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/predict.py",
+            "args": [
+                "--wandb_run_id",
+                "spyrosg/CodeSearchNet/stpw2b56"
+            ],
+            "cwd": "${workspaceFolder}/src",
+            "console": "integratedTerminal"
         }
     ]
 }
